@@ -8,7 +8,7 @@ def calc_zscore(series):
     return (series - np.mean(series)) / np.std(series)
 
 
-### equities data - download and visualization -------------------------------------------------------------------------
+### equities data - download -------------------------------------------------------------------------
 
 STOCK_A = "AAPL"
 STOCK_B = "MSFT"
@@ -19,9 +19,6 @@ stock_b = yf.download(STOCK_B, start='2020-01-01', end='2023-04-28')
 closing_price = pd.concat([stock_a['Close'], stock_b['Close']], axis=1)
 closing_price.columns = [STOCK_A, STOCK_B]
 
-# show the closing price plot
-closing_price.plot.line()
-# plt.show()
 
 ### --------------------------------------------------------------------------------------------------------------------
 
