@@ -2,6 +2,7 @@
 
 import pandas as pd
 import yfinance as yf
+import json
 import plotly.express as px
 
 def WriteCsvForEachTicker(df, out_data_dir):
@@ -17,7 +18,7 @@ def WriteCsvForEachTicker(df, out_data_dir):
                          str(single_df.index[0].date())
                          + '_' + str(single_df.index[-1].date()) +
                          '.csv',
-                         index=False)
+                         index=True)
 
 def WriteCsvForEachVariable(df, out_data_dir):
 
@@ -33,7 +34,7 @@ def WriteCsvForEachVariable(df, out_data_dir):
                          str(single_df.index[0].date())
                          + '_' + str(single_df.index[-1].date()) +
                          '.csv',
-                         index=False)
+                         index=True)
 
 # upload tickers
 Tickers = pd.read_csv('/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener_02052023.csv',
@@ -48,6 +49,13 @@ out_data_dir = '/Users/foscoantognini/Documents/USEquityData/Price_Volume_Dailie
 
 tickerStrings = ['AAPL', 'MSFT']
 df = yf.download(tickerStrings, group_by='Ticker', start='2005-01-01', end='2023-04-28')
+
+# WriteCsvForEachVariable(df,out_data_dir)
+
+# WriteCsvForEachTicker(df,out_data_dir)
+
+# load_csv = pd.read_csv(out_data_dir + 'Adj Close_2005-01-03_2023-04-27.csv', index_col=0)
+
 
 
 
