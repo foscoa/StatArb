@@ -5,56 +5,48 @@ import yfinance as yf
 import json
 import plotly.express as px
 
-def WriteCsvForEachTicker(df, out_data_dir):
+def WriteCsvForEachVariable(data_dir):
 
-    df = df.stack(level=0).rename_axis(['Date', 'Ticker']).reset_index(level=1)
-
-    # write one csv file with the data for each ticker
-    for i in tickerStrings:
-        single_df = df[df.Ticker == i]
-        single_df.to_csv(out_data_dir +
-                         i +
-                         '_' +
-                         str(single_df.index[0].date())
-                         + '_' + str(single_df.index[-1].date()) +
-                         '.csv',
-                         index=True)
-
-def WriteCsvForEachVariable(df, out_data_dir):
+    # download data from yahoo finance
+    tickerStrings = ['MCD', 'KO']
+    df = yf.download(tickerStrings, group_by='Ticker', start='2005-01-01', end='2023-04-28')
 
     variables = list(df.stack(level=0).columns)
 
     # write one csv file with the data for each variable
     for i in variables:
 
-        single_df = df.stack(level=0)['Adj Close'].unstack(level=1)
-        single_df.to_csv(out_data_dir +
-                         i +
-                         '_' +
-                         str(single_df.index[0].date())
-                         + '_' + str(single_df.index[-1].date()) +
-                         '.csv',
-                         index=True)
+        # data with current variable
+        new_df = df.stack(level=0)[i].unstack(level=1)
+
+        # current variable name
+        data_string = data_dir + i + '_' + str(new_df.index[0].date()) + '_' + str(new_df.index[-1].date()) + '.csv'
+
+        # load data and reindexing
+        merged_df = pd.read_csv(data_string, index_col=0)
+        new_df.index = merged_df.index
+
+        # Merge the two dataframes on their common column
+        merged_df= pd.merge(merged_df, new_df, on='Date')
+
+        # write merged df
+        merged_df.to_csv(data_string, index=True)
 
 # upload tickers
-Tickers = pd.read_csv('/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener_02052023.csv',
-                      sep=',')
+
+tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener_02052023.csv' # home
+# tick_dir = 'C:/Users/Fosco/Desktop/Fosco/Tickers/' # office
+
+Tickers = pd.read_csv(tick_dir, sep=',')
 
 # directory where the files will be written
-out_data_dir = '/Users/foscoantognini/Documents/USEquityData/Price_Volume_Dailies/'
+#  data_dir = '/Users/foscoantognini/Documents/USEquityData/Price_Volume_Dailies/'
+data_dir = 'C:\\Users\\Fosco\\Desktop\\Fosco\\USEquityData\\' # office
 
-# my_ticker = Tickers.Symbol[0]
+# WriteCsvForEachVariable(df,data_dir)
 
-# stock_a = yf.download(my_ticker, start='2005-01-01', end='2023-04-28')
 
-tickerStrings = ['AAPL', 'MSFT']
-df = yf.download(tickerStrings, group_by='Ticker', start='2005-01-01', end='2023-04-28')
-
-# WriteCsvForEachVariable(df,out_data_dir)
-
-# WriteCsvForEachTicker(df,out_data_dir)
-
-# load_csv = pd.read_csv(out_data_dir + 'Adj Close_2005-01-03_2023-04-27.csv', index_col=0)
+# load_csv = pd.read_csv(data_dir + 'Adj Close_2005-01-03_2023-04-27.csv', index_col=0)
 
 
 
