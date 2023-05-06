@@ -3,6 +3,7 @@
 import pandas as pd
 import yfinance as yf
 import random
+import time
 import plotly.express as px
 
 # directory where the files will be written
@@ -18,7 +19,6 @@ all_tickers = list(Nasdaq_df.Symbol)
 # read files with downloaded data and store it in list
 already_downloaded_tickers = pd.read_csv(data_dir + '/downloaded_tickers.csv')
 already_downloaded_tickers = list(already_downloaded_tickers['0'])
-
 
 while len(already_downloaded_tickers) < len(all_tickers):
     # remaining tickers
@@ -52,9 +52,15 @@ while len(already_downloaded_tickers) < len(all_tickers):
         # write merged df
         merged_df.to_csv(data_string, index=True)
 
-
+    # write tickers already downloaded
     tickers_to_write = already_downloaded_tickers + tickers_to_download
     pd.DataFrame(tickers_to_write).to_csv(data_dir + '/downloaded_tickers.csv', index=False)
+
+    # pause program for a random time
+    time.sleep(random.randint(15, 30))
+
+    # print progress percentage
+    print(str(round(len(already_downloaded_tickers)/len(all_tickers)*100,3)) + "%")
 
 
 
