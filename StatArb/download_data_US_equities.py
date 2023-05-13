@@ -4,6 +4,7 @@ import pandas as pd
 import yfinance as yf
 import random
 import time
+import datetime as dt
 import plotly.express as px
 
 # directory where the files will be written
@@ -16,20 +17,37 @@ tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener
 Nasdaq_df = pd.read_csv(tick_dir, sep=',')
 all_tickers = list(Nasdaq_df.Symbol)
 
+start_date = '2005-01-01'
+end_date = '2023-04-28'
+
 # read files with downloaded data and store it in list
-already_downloaded_tickers = pd.read_csv(data_dir + '/downloaded_tickers.csv')
-already_downloaded_tickers = list(already_downloaded_tickers['0'])
+already_downloaded_tickers = []
+old_df = pd.DataFrame()
+
+for i in ['Adj Close', 'Close', 'High', 'Low', 'Open', 'Volume']:
+    locals()[f'old_df_{i}'] = pd.DataFrame()
 
 while len(already_downloaded_tickers) < len(all_tickers):
+
+    # print progress percentage
+    print('[*********************'
+          + str(round(len(already_downloaded_tickers)/len(all_tickers)*100,3))
+          + "%" +
+          '**********************]  ' +
+          str(len(already_downloaded_tickers)) +
+          ' of '
+          + str(len(all_tickers)) +
+          ' completed')
+
     # remaining tickers
     remaining_tickers = list(set(all_tickers) - set(already_downloaded_tickers))
 
     # select tickers to be downloaded
-    random_integer = random.randint(3, 6)
-    tickers_to_download = random.sample(remaining_tickers, 5)
+    random_integer = random.randint(2, 7)
+    tickers_to_download = random.sample(remaining_tickers, random_integer)
 
     # download data from yahoo finance
-    df = yf.download(tickers_to_download, group_by='Ticker', start='2005-01-01', end='2023-04-28')
+    df = yf.download(tickers_to_download, group_by='Ticker', start=start_date, end=end_date)
 
     variables = list(df.stack(level=0).columns)
 
@@ -37,33 +55,19 @@ while len(already_downloaded_tickers) < len(all_tickers):
     for i in variables:
 
         # data with current variable
-        new_df = df.stack(level=0)[i].unstack(level=1)
-
-        # current variable name
-        data_string = data_dir + i + '_' + str(new_df.index[0].date()) + '_' + str(new_df.index[-1].date()) + '.csv'
-
-        # load data and reindexing
-        merged_df = pd.read_csv(data_string, index_col=0)
-        new_df.index = merged_df.index
+        locals()[f'new_df_{i}'] = df.stack(level=0)[i].unstack(level=1)
 
         # Merge the two dataframes on their common column
-        merged_df = pd.merge(merged_df, new_df, on='Date')
-
-        # write merged df
-        merged_df.to_csv(data_string, index=True)
+        locals()[f'old_df_{i}'] = pd.merge(locals()[f'old_df_{i}'], locals()[f'new_df_{i}'], how='outer', left_index=True, right_index=True)
 
     # write tickers already downloaded
-    tickers_to_write = already_downloaded_tickers + tickers_to_download
-    pd.DataFrame(tickers_to_write).to_csv(data_dir + '/downloaded_tickers.csv', index=False)
+    already_downloaded_tickers = already_downloaded_tickers + tickers_to_download
 
     # pause program for a random time
     time.sleep(random.randint(15, 30))
 
-    # print progress percentage
-    print(str(round(len(already_downloaded_tickers)/len(all_tickers)*100,3)) + "%")
-
-
-
+for i in ['Adj Close', 'Close', 'High', 'Low', 'Open', 'Volume']:
+    locals()[f'old_df_{i}'].to_csv(data_dir + str(i) +'.csv', index=True)
 
 
 
