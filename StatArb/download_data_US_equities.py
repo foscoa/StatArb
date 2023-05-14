@@ -71,6 +71,10 @@ for i in ['Adj Close', 'Close', 'High', 'Low', 'Open', 'Volume']:
 
 
 
+adjclose = pd.read_csv(data_dir + 'Adj Close.csv')
+
+
+
 
 
 
