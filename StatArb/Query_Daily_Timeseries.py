@@ -9,6 +9,14 @@ try:
 except Exception:
     print("Error: " + Exception)
 
-# Step 3 - List database names
+# select the collection
+collection = client.Financial_Data.Daily_Timeseries
+
+quer_result = collection.find({"Data.Symbol": "AAPL"})
+
+print(list(quer_result))
+
+
+
 
 

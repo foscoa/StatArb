@@ -4,7 +4,7 @@ import pandas as pd
 import yfinance as yf
 import random
 import time
-import datetime as dt
+import datetime
 import plotly.express as px
 
 # directory where the files will be written
@@ -17,8 +17,9 @@ tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener
 Nasdaq_df = pd.read_csv(tick_dir, sep=',')
 all_tickers = list(Nasdaq_df.Symbol)
 
-start_date = '2005-01-01'
-end_date = '2023-04-28'
+#
+d0 = datetime.date(2023, 4, 1)
+dF = datetime.date(2023, 4, 28)
 
 # read files with downloaded data and store it in list
 already_downloaded_tickers = []
