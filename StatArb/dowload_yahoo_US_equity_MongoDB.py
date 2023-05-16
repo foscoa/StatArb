@@ -22,16 +22,21 @@ def yf_to_JSON(df):
     json_dict = [{"timestamp": key, "Data": json_dict[key]} for key in json_dict.keys()]
 
     return json_dict
+
 def updateDaily_Timeseries(json_new):
     # updating database
     for i in json_new:
         # check if timeseries already exist
         if not list(collection.find({"timestamp": i['timestamp']})):
-            collection.insert_one(i)
+
+            result = collection.insert_one(i)
+            print(result.inserted_id)
         else:
-            old_document = collection.find_one({'timestamp': i['timestamp']})
+            new_document = collection.find_one({'timestamp': i['timestamp']})
+            new_document['Data'] = new_document['Data'] + i['Data']
             collection.find_one_and_replace(filter={'timestamp': i['timestamp']},
-                                            return_document=old_document['Data'] + json_new_tck[i]['Data'])
+                                            replacement=new_document)
+
 
 # load tickers
 tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener_02052023.csv' # home
@@ -76,14 +81,11 @@ json_new_date = yf_to_JSON(df_new_date)
 json_new_tck = yf_to_JSON(df_new_tck)
 
 
-# insert the documents into the collection
-# result = collection.insert_many(json1)
-# print the object ids of the inserted documents
-# print(result.inserted_ids)
-
 updateDaily_Timeseries(json1)
 updateDaily_Timeseries(json_new_date)
 updateDaily_Timeseries(json_new_tck)
+
+
 
 
 
