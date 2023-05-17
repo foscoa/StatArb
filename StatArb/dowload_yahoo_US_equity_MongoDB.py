@@ -20,7 +20,7 @@ def yf_to_JSON(df):
 
     return json_dict
 
-def updateDaily_Timeseries(json_new):
+def updateDaily_Timeseries(json_new, collection):
     # updating database
     for i in json_new:
         # check if timeseries already exist
@@ -49,25 +49,32 @@ def updateDaily_Timeseries(json_new):
 
 # Create a mongodb client, use default local host
 try:
-    client = pymongo.MongoClient()
+    client = pymongo.MongoClient("mongodb://localhost:27017/")
 except Exception:
     print("Error: " + Exception)
 
 
 # Ticker list from https://www.nasdaq.com/market-activity/stocks/screener. Filter for NOT nano-cap
+# Tickers directory and file name
+tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/'
+tick_name =  'nasdaq_screener_1684349924023.csv'
 
-# load tickers
-tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener_02052023.csv' # home
-# tick_dir = 'C:/Users/Fosco/Desktop/Fosco/Tickers/' # office
-# Nasdaq_df = pd.read_csv(tick_dir, sep=',')
-# all_tickers = list(Nasdaq_df.Symbol)
+nasdaq_data = pd.read_csv(tick_dir + tick_name)
+nasdaq_data.drop(columns=['Last Sale', 'Net Change', '% Change', 'Volume'],
+                 inplace=True)
+
+# select the collection Nasdaq
+collection_NASDAQ_Screener = client.Financial_Data.NASDAQ_Screener
+
+# collection_NASDAQ_Screener.insert_many(nasdaq_data.to_dict(orient='records'))
+nasdaq_symbols = collection_NASDAQ_Screener.distinct('Symbol')
 
 
-# select the collection
-collection = client.Financial_Data.Daily_Timeseries
+# select the collection Daily_Times_Series
+collection_Daily_Time_Series = client.Financial_Data.Daily_Time_Series
 
 # print unique symbols in the database
-db_symbols = collection.distinct('Data.Symbol')
+db_symbols = collection_Daily_Time_Series.distinct('Data.Symbol')
 
 print("There are " +
       str(len(db_symbols)) +
@@ -94,9 +101,9 @@ json_new_date = yf_to_JSON(df_new_date)
 json_new_tck = yf_to_JSON(df_new_tck)
 
 
-updateDaily_Timeseries(json1)
-updateDaily_Timeseries(json_new_date)
-updateDaily_Timeseries(json_new_tck)
+updateDaily_Timeseries(json1, collection_Daily_Time_Series)
+updateDaily_Timeseries(json_new_date, collection_Daily_Time_Series)
+updateDaily_Timeseries(json_new_tck, collection_Daily_Time_Series)
 
 
 
