@@ -1,5 +1,3 @@
-# Ticker list from https://www.nasdaq.com/market-activity/stocks/screener. Filter for NOT nano-cap
-
 import pandas as pd
 import yfinance as yf
 import random
@@ -7,7 +5,6 @@ import pymongo
 import time
 import datetime as dt
 import plotly.express as px
-
 
 def yf_to_JSON(df):
     # create json nested file
@@ -32,17 +29,23 @@ def updateDaily_Timeseries(json_new):
             result = collection.insert_one(i)
             print(result.inserted_id)
         else:
+            # find current data at specific timestamp
             new_document = collection.find_one({'timestamp': i['timestamp']})
-            new_document['Data'] = new_document['Data'] + i['Data']
-            collection.find_one_and_replace(filter={'timestamp': i['timestamp']},
-                                            replacement=new_document)
 
+            # check if there are two equal symbols
+            set1 = set([j['Symbol'] for j in new_document['Data']])
+            set2 = set([k['Symbol'] for k in i['Data']])
 
-# load tickers
-tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener_02052023.csv' # home
-# tick_dir = 'C:/Users/Fosco/Desktop/Fosco/Tickers/' # office
-# Nasdaq_df = pd.read_csv(tick_dir, sep=',')
-# all_tickers = list(Nasdaq_df.Symbol)
+            # check length
+            if len(set1.intersection(set2)) > 0:
+                print("At node " + new_document['_id'] + " there is a duplicate: " +
+                      str(set1.intersection(set2)))
+                return
+            else:
+                new_document['Data'] = new_document['Data'] + i['Data']
+                collection.find_one_and_replace(filter={'timestamp': i['timestamp']},
+                                                replacement=new_document)
+
 
 # Create a mongodb client, use default local host
 try:
@@ -50,21 +53,31 @@ try:
 except Exception:
     print("Error: " + Exception)
 
-# Step 3 - List database names
-print(client.list_database_names())
+
+# Ticker list from https://www.nasdaq.com/market-activity/stocks/screener. Filter for NOT nano-cap
+
+# load tickers
+tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/nasdaq_screener_02052023.csv' # home
+# tick_dir = 'C:/Users/Fosco/Desktop/Fosco/Tickers/' # office
+# Nasdaq_df = pd.read_csv(tick_dir, sep=',')
+# all_tickers = list(Nasdaq_df.Symbol)
+
 
 # select the collection
 collection = client.Financial_Data.Daily_Timeseries
+
+# print unique symbols in the database
+db_symbols = collection.distinct('Data.Symbol')
+
+print("There are " +
+      str(len(db_symbols)) +
+      " symbols in the Daily_Timeseries database: " +
+      str(db_symbols))
 
 # Start time series
 start_date = '2023-04-01'
 end_date = '2023-04-28'
 
-# read files with downloaded data and store it in list
-# already_downloaded_tickers = []
-
-# remaining tickers
-# remaining_tickers = list(set(all_tickers) - set(already_downloaded_tickers))
 
 # select tickers to be downloaded
 random_integer = random.randint(2, 7)
