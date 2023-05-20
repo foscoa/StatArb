@@ -4,6 +4,7 @@ import yfinance as yf
 import random
 import pymongo
 import numpy as np
+from datetime import date
 import time
 import datetime as dt
 import plotly.express as px
@@ -65,13 +66,11 @@ except Exception:
 
 
 # Ticker list from https://www.nasdaq.com/market-activity/stocks/screener. Filter for NOT nano-cap
-
 # load tickers
 # tick_dir = '/Users/foscoantognini/Documents/USEquityData/Tickers/'  # home
-tick_dir = 'C:\\Users\\Fosco\\Desktop\\Fosco\\USEquityData\\' # office
-tick_file_names = 'nasdaq_screener_1684394200429.csv'
-last_nasdaq_data = pd.read_csv(tick_dir + tick_file_names)
-
+# tick_dir = 'C:\\Users\\Fosco\\Desktop\\Fosco\\USEquityData\\' # office
+# tick_file_names = 'nasdaq_screener_1684394200429.csv'
+# last_nasdaq_data = pd.read_csv(tick_dir + tick_file_names)
 # collection_NDAQ.insert_many(last_nasdaq_data.to_dict(orient='records')) #only to be used in the first time
 
 
@@ -82,24 +81,41 @@ collection_NDAQ = client.Financial_Data.Nasdaq_Data
 start_date = '2001-01-01'
 end_date = '2023-05-01'
 
+defect_tickers = []
+
 # select Daily_Timesieries collection
 collection_DT = client.Financial_Data.Daily_Timeseries
 
 # print unique symbols in the database
-DT_symbols = set(collection_DT.distinct('Data.Symbol'))
+DT_symbols = list(collection_DT.distinct('Data.Symbol'))
 
 print("There are " +
       str(len(DT_symbols)) +
       " symbols in the Daily_Timeseries database: " +
       str(DT_symbols))
 
-NDAQ_symbols = set(collection_NDAQ.distinct('Symbol'))
+NDAQ_symbols = list(collection_NDAQ.distinct('Symbol'))[1:]
 
-remaining_tickers = list(np.setdiff1d(NDAQ_symbols, DT_symbols, assume_unique=True)[0])
+
+# find remaining tickers to be downloaded
+remaining_tickers = []
+for element in NDAQ_symbols:
+    if element not in DT_symbols:
+        remaining_tickers.append(element)
+
 
 # select tickers to be downloaded
 random_integer = random.randint(2, 7)
 tickers_to_download = random.sample(remaining_tickers, random_integer)
+
+
+# check if ticker data does not have a price in last business date or does not exist
+for j in tickers_to_download:
+    if yf.download(j, start = date.today()).empty:
+        print("Last data point for " + j + " is empty.")
+        defect_tickers.append(j)
+        tickers_to_download.remove(j)
+
 
 # download data from yahoo finance
 temp_yf = yf.download(tickers_to_download,
