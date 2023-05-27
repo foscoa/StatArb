@@ -17,6 +17,7 @@ def yf_to_JSON(df):
         for col in list(df.stack().columns):  # loop through symbols
             if list(df[col].loc[i].dropna()) != []:
                 timestamp_list.append({**{"Symbol": col, }, **df[col].loc[i].to_dict()})
+
         json_dict[i.isoformat()] = timestamp_list
 
     json_dict = [{"timestamp": key, "Data": json_dict[key]} for key in json_dict.keys()]
@@ -30,7 +31,6 @@ def update_Daily_Timeseries(json_new, collection):
         if not list(collection.find({"timestamp": i['timestamp']})):
 
             result = collection.insert_one(i)
-            print(result.inserted_id)
         else:
             # find current data at specific timestamp
             new_document = collection.find_one({'timestamp': i['timestamp']})
@@ -75,58 +75,63 @@ except Exception:
 
 
 # select Nasdaq_Data collection
-collection_NDAQ = client.Financial_Data.Nasdaq_Data
+collection_NDAQ = client.Financial_Data.NASDAQ_Screener
+NDAQ_symbols = list(collection_NDAQ.distinct('Symbol'))[1:]
 
 # Start time series
 start_date = '2001-01-01'
 end_date = '2023-05-01'
 
-defect_tickers = []
-
-# select Daily_Timesieries collection
-collection_DT = client.Financial_Data.Daily_Timeseries
-
-# print unique symbols in the database
-DT_symbols = list(collection_DT.distinct('Data.Symbol'))
-
-print("There are " +
-      str(len(DT_symbols)) +
-      " symbols in the Daily_Timeseries database: " +
-      str(DT_symbols))
-
-NDAQ_symbols = list(collection_NDAQ.distinct('Symbol'))[1:]
+defect_tickers = ['ICPT', 'KELYB', 'ELLO']
 
 
-# find remaining tickers to be downloaded
-remaining_tickers = []
-for element in NDAQ_symbols:
-    if element not in DT_symbols:
-        remaining_tickers.append(element)
+while len(remaining_tickers) > 0:
 
+    # select Daily_Timesieries collection
+    collection_DT = client.Financial_Data.Daily_Timeseries
 
-# select tickers to be downloaded
-random_integer = random.randint(2, 7)
-tickers_to_download = random.sample(remaining_tickers, random_integer)
+    # print unique symbols in the database
+    DT_symbols = list(collection_DT.distinct('Data.Symbol'))
 
+    # find remaining tickers to be downloaded
+    remaining_tickers = []
+    for element in NDAQ_symbols:
+        if element not in DT_symbols:
+            remaining_tickers.append(element)
 
-# check if ticker data does not have a price in last business date or does not exist
-for j in tickers_to_download:
-    if yf.download(j, start = date.today()).empty:
-        print("Last data point for " + j + " is empty.")
-        defect_tickers.append(j)
-        tickers_to_download.remove(j)
+    # select tickers to be downloaded
+    random_integer = random.randint(2, 7)
+    tickers_to_download = random.sample(remaining_tickers, random_integer)
 
+    # check if ticker data does not have a price in last business date or does not exist
+    for j in tickers_to_download:
+        if yf.download(j, start='2023-05-01', end='2023-05-02').empty:
+            print("Last data point for " + j + " is empty.")
+            defect_tickers.append(j)
+            tickers_to_download.remove(j)
 
-# download data from yahoo finance
-temp_yf = yf.download(tickers_to_download,
-                      group_by='Ticker',
-                      start=start_date,
-                      end=end_date)
+    # download data from yahoo finance
+    temp_yf = yf.download(tickers_to_download,
+                          group_by='Ticker',
+                          start=start_date,
+                          end=end_date)
+    if len(tickers_to_download) > 1:
+        json_yf = yf_to_JSON(temp_yf)
 
-json_yf = yf_to_JSON(temp_yf)
+        update_Daily_Timeseries(json_yf, collection_DT)
 
-update_Daily_Timeseries(json_yf, collection_DT)
+    # print progress percentage
+    print('[*********************'
+          + str(round(len(DT_symbols)/len(NDAQ_symbols)*100,3))
+          + "%" +
+          '**********************]  ' +
+          str(len(DT_symbols)) +
+          ' of '
+          + str(len(NDAQ_symbols)) +
+          ' completed\nFollowing tickers have been added: ' + str(tickers_to_download))
 
+    # pause program for a random time
+    time.sleep(random.randint(15, 25))
 
 
 
