@@ -4,9 +4,7 @@ import yfinance as yf
 import random
 import pymongo
 import numpy as np
-from datetime import date
 import time
-import datetime as dt
 import plotly.express as px
 
 def yf_to_JSON(df):
