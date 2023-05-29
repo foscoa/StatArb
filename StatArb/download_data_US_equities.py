@@ -71,6 +71,9 @@ for i in ['Adj Close', 'Close', 'High', 'Low', 'Open', 'Volume']:
     locals()[f'old_df_{i}'].to_csv(data_dir + str(i) +'.csv', index=True)
 
 
+# Start time series
+start_date = '2023-02-01'
+end_date = '2023-03-01'
 
 adjclose = pd.read_csv(data_dir + 'Adj Close.csv')
 
