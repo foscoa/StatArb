@@ -2,6 +2,9 @@
 
 import pandas as pd
 import json
+import requests
+import bs4 as bs
+
 
 file_name = 'company_2023QTR2.idx'
 dir_SEC = "C:\\Users\\Fosco\\Desktop\\"
@@ -42,9 +45,28 @@ def readSECTickersExchangeFile(filename):
     return pd.DataFrame(data, columns=fields)
 
 # parse company file to get all filing names
-df = parseCompanySECfiles(dir_SEC + file_name)
+df_filings_names = parseCompanySECfiles(dir_SEC + file_name)
 
 # find AMZN 10-Q filing for 2023QTR2
 ticker = 'AMZN'
 company_tickers_exchange = readSECTickersExchangeFile(dir_SEC + "company_tickers_exchange.json")
 CIK = str(company_tickers_exchange[company_tickers_exchange.ticker == ticker].cik.values[0])
+
+filing_name = 'https://www.sec.gov/Archives/' +\
+              df_filings_names[(df_filings_names['CIK'] == CIK) &
+                               (df_filings_names['Form Type'] == '10-Q')].values[0][-1]
+
+# scrape 10-Q SEC filings
+# https://quantopian-archive.netlify.app/notebooks/notebooks/quantopian_notebook_474.html
+# https://www.sec.gov/ix?doc=/Archives/edgar/data/1018724/000101872423000008/amzn-20230331.htm
+
+res = requests.get(filing_name,
+                   headers={'User-Agent': 'Fosco Antognini',
+                           'Accept-Encoding': 'gzip, deflate',
+                           'Host': 'www.sec.gov'})
+
+# Parse the response HTML using BeautifulSoup
+soup = bs.BeautifulSoup(res.text, "lxml")
+
+# Extract all tables from the response
+html_tables = soup.find_all('table')
