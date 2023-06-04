@@ -63,7 +63,7 @@ def generateTimeSeries(symbols, start, end, param):
     return df
 
 # Specify the symbols you want to retrieve the time series for
-symbols = ['WMT', 'JPM']
+symbols = ['WMT', 'KO']
 start = '2007-12-01'
 end = '2011-12-01'
 param = 'Adj Close'
@@ -78,6 +78,7 @@ TS = generateTimeSeries(symbols  = symbols,
 # plot cumulative pnl
 fig = px.line(TS)
 fig.show()
+
 
 
 
