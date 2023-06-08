@@ -8,8 +8,8 @@ import numpy as np
 
 # https://www.sec.gov/Archives/edgar/full-index/2023/QTR2/company.idx
 file_name = 'company_2023QTR2.idx'
-dir_SEC = '/Users/foscoantognini/Desktop/'   # home
-# dir_SEC = "C:\\Users\\Fosco\\Desktop\\"     # office
+# dir_SEC = '/Users/foscoantognini/Desktop/'   # home
+dir_SEC = "C:\\Users\\Fosco\\Desktop\\"     # office
 
 def parseCompanySECfiles(filename):
     idx_table = pd.read_table(filename)
@@ -50,7 +50,7 @@ def readSECTickersExchangeFile(filename):
 df_filings_names = parseCompanySECfiles(dir_SEC + file_name)
 
 # find AMZN 10-Q filing for 2023QTR2
-ticker = 'AMZN'
+ticker = 'KO'
 company_tickers_exchange = readSECTickersExchangeFile(dir_SEC + "company_tickers_exchange.json")
 CIK = str(company_tickers_exchange[company_tickers_exchange.ticker == ticker].cik.values[0])
 
@@ -62,6 +62,9 @@ filing_name = 'https://www.sec.gov/Archives/' +\
 # https://quantopian-archive.netlify.app/notebooks/notebooks/quantopian_notebook_474.html
 # https://www.sec.gov/ix?doc=/Archives/edgar/data/1018724/000101872423000008/amzn-20230331.htm
 # https://www.sec.gov/Archives/edgar/data/1018724/0001018724-23-000008.txt
+# https://www.sec.gov/edgar/search/
+# https://www.pythonforfinance.net/2019/01/28/trading-strategy-performance-report-in-python-part-3/
+
 
 res = requests.get(filing_name,
                    headers={'User-Agent': 'Fosco Antognini',
@@ -74,46 +77,52 @@ soup = bs.BeautifulSoup(res.text, "lxml")
 # Extract all tables from the response
 html_tables = soup.find_all('table')
 
-# Iterate over the tables and find Statement of Cash Flows (SCF)"
-for table in html_tables:
-    # Convert the table to a string and check for the word
-    if 'CASH, CASH EQUIVALENTS, AND RESTRICTED CASH, BEGINNING OF PERIOD' in str(table):
-        # Process the table or perform desired operations
-        SCF = pd.read_html(str(table))[0]
 
-# get only last 3 months ended CF and remove first row, abstract
-SCF = SCF.iloc[1:, 0:2]
+def scrapeSCF():
+    # Iterate over the tables and find Statement of Cash Flows (SCF)"
+    for table in html_tables:
+        # Convert the table to a string and check for the word
+        if 'CASH, CASH EQUIVALENTS, AND RESTRICTED CASH, BEGINNING OF PERIOD' in str(table):
+            # Process the table or perform desired operations
+            SCF = pd.read_html(str(table))[0]
 
-CF_json = {}    # empty json to store clean
-multiplier = 0
-if 'in Millions' in str(SCF.columns[0]): multiplier = 1000
+    # get only last 3 months ended CF and remove first row, abstract
+    SCF = SCF.iloc[1:, 0:2]
 
-# Divide dataframe
-arr = np.array([str(item).isupper() for item in SCF.iloc[:, 0]])
+    CF_json = {}    # empty json to store clean
+    multiplier = 0
+    if 'in Millions' in str(SCF.columns[0]): multiplier = 1000
 
-# Find the positions where the array is True
-positions = np.where(arr)[0]
-positions = np.append(positions, len(arr))
+    # Divide dataframe
+    arr = np.array([str(item).isupper() for item in SCF.iloc[:, 0]])
 
-for j in range(0, (len(positions)-1)):
-    # take care of single entries
-    diff = positions[j+1] - positions[j]
-    if diff == 1:
-        CF_json[str(SCF.iloc[positions[j]:positions[j + 1], 0].values[0])] =\
-            int(str(SCF.iloc[positions[j]:positions[j+1], 1].values[0]).replace('$', '').replace(',', '').split()[0])*multiplier
-    else:
-        # Select decomposition
-        temp_sub_df = SCF.iloc[positions[j]:positions[j+1], :]
-        sub_dict = {}
-        for k in range(1, temp_sub_df.shape[0]):
-            if type(temp_sub_df.iloc[k, 1]) == str:
-                sub_dict[temp_sub_df.iloc[k,0]] =\
-                    int(temp_sub_df.iloc[k,1].replace('(', '-').replace(',', '').replace(')', ''))*multiplier
-            else:
-                sub_dict[temp_sub_df.iloc[k, 0]] = temp_sub_df.iloc[k, 1]
+    # Find the positions where the array is True
+    positions = np.where(arr)[0]
+    positions = np.append(positions, len(arr))
+
+    for j in range(0, (len(positions)-1)):
+        # take care of single entries
+        diff = positions[j+1] - positions[j]
+        if diff == 1:
+            CF_json[str(SCF.iloc[positions[j]:positions[j + 1], 0].values[0])] =\
+                int(str(SCF.iloc[positions[j]:positions[j+1], 1].values[0]).replace('$', '').replace(',', '').split()[0])*multiplier
+        else:
+            # Select decomposition
+            temp_sub_df = SCF.iloc[positions[j]:positions[j+1], :]
+            sub_dict = {}
+            for k in range(1, temp_sub_df.shape[0]):
+                if type(temp_sub_df.iloc[k, 1]) == str:
+                    sub_dict[temp_sub_df.iloc[k,0]] =\
+                        int(temp_sub_df.iloc[k,1].replace('(', '-').replace(',', '').replace(')', ''))*multiplier
+                else:
+                    sub_dict[temp_sub_df.iloc[k, 0]] = temp_sub_df.iloc[k, 1]
 
 
-        CF_json[temp_sub_df.iloc[0,0]] = sub_dict
+            CF_json[temp_sub_df.iloc[0,0]] = sub_dict
+
+    return CF_json
+
+SCF_AMZN = scrapeSCF()
 
 
 

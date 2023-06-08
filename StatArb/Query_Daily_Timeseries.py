@@ -5,6 +5,7 @@ import pymongo
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
+import numpy as np
 
 # Step 2 - create a mongodb client, use default local host
 try:
@@ -62,21 +63,73 @@ def generateTimeSeries(symbols, start, end, param):
     # Display the resulting time series DataFrame
     return df
 
+def calculate_log_returns(asset_prices):
+    # calculate log returns
+    log_returns = np.log(asset_prices).shift(-1) - np.log(asset_prices)
+    log_returns = log_returns.drop(log_returns.index[-1])
+    log_returns.index = asset_prices.index[1:]
+
+    return log_returns
+
 # Specify the symbols you want to retrieve the time series for
-symbols = ['WMT', 'KO']
-start = '2007-12-01'
-end = '2011-12-01'
+symbols = ['CVX', 'STZ']
+start = '2001-01-02'
+end = '2005-01-30'
 param = 'Adj Close'
 
-TS = generateTimeSeries(symbols  = symbols,
-                        start    = start,
-                        end      = end,
-                        param    = param)
+price_TS = generateTimeSeries(symbols  = symbols,
+                              start    = start,
+                              end      = end,
+                              param    = param)
 
 
+# calculate log returns
+log_returns = np.log(price_TS).shift(-1) - np.log(price_TS)
+log_returns = log_returns.drop(log_returns.index[-1])
+log_returns.index = price_TS.index[1:]
+
+# signal, long CVX short STZ
+signal = price_TS*0
+signal.CVX = signal.CVX - 1
+signal.STZ = signal.STZ + 1
+
+PT_log_returns = signal*log_returns
+PT_log_returns.fillna(0, inplace=True)
+PT_aggr = pd.DataFrame(data = PT_log_returns.sum(axis=1) + 1, columns = ['Portfolio'])
+line = PT_aggr.cumprod()
+
+
+class Backtest:
+    def __init__(self,
+                 name           = "",
+                 description    = "",
+                 asset_prices   = np.nan,
+                 signal         = np.nan):
+        self.name = name
+        self.description = description
+        self.asset_prices = asset_prices
+        self.signal = signal
+
+    def calculate_PT_log_returns(self):
+
+        PT_log_returns = self.signal * calculate_log_returns(self.asset_prices)
+        PT_log_returns.fillna(0, inplace=True)
+        PT_cum_ret = pd.DataFrame(data=PT_log_returns.sum(axis=1) + 1, columns=['Portfolio'])
+        PT_cum_ret = PT_cum_ret.cumprod()
+
+        return PT_cum_ret
+
+
+# Create an instance of the TradingStrategy class
+strategy = Backtest(
+    name="Momentum Strategy",
+    description="Invest in high-performing assets over a certain period",
+    asset_prices=price_TS,
+    signal=signal
+)
 
 # plot cumulative pnl
-fig = px.line(TS)
+fig = px.line(line)
 fig.show()
 
 
