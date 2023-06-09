@@ -95,11 +95,12 @@ signal.STZ = signal.STZ + 1
 
 PT_log_returns = signal*log_returns
 PT_log_returns.fillna(0, inplace=True)
-PT_aggr = pd.DataFrame(data = PT_log_returns.sum(axis=1) + 1, columns = ['Portfolio'])
+PT_aggr = pd.DataFrame(data=PT_log_returns.sum(axis=1) + 1, columns=['Portfolio'])
 line = PT_aggr.cumprod()
 
+# drawdown
 
-class Backtest:
+class backtest:
     def __init__(self,
                  name           = "",
                  description    = "",
@@ -110,23 +111,52 @@ class Backtest:
         self.asset_prices = asset_prices
         self.signal = signal
 
-    def calculate_PT_log_returns(self):
+    def portfolio_log_returns(self):
 
         PT_log_returns = self.signal * calculate_log_returns(self.asset_prices)
         PT_log_returns.fillna(0, inplace=True)
-        PT_cum_ret = pd.DataFrame(data=PT_log_returns.sum(axis=1) + 1, columns=['Portfolio'])
-        PT_cum_ret = PT_cum_ret.cumprod()
+        PT_log_returns = pd.DataFrame(data=PT_log_returns.sum(axis=1), columns=['Portfolio'])
+
+        return PT_log_returns
+
+    def portfolio_cumulative_log_returns(self):
+
+        PT_cum_ret = (self.portfolio_log_returns()+1).cumprod()
 
         return PT_cum_ret
 
+    def drawdown(self):
+
+        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        DD = PT_cum_ret - PT_cum_ret.cummax()
+
+        return DD
+
+
+    def calculate_summary_statistics(self):
+
+        summary_stat = {}
+
+        PT_log_returns = self.portfolio_log_returns()
+
+        summary_stat["ann. mean"] = float(PT_log_returns.mean().values) * 252
+        summary_stat["ann. std"] = float(PT_log_returns.std().values) * np.sqrt(252)
+        summary_stat["max DD"] = float(self.drawdown().min().values)
+
+        return summary_stat
+
+
 
 # Create an instance of the TradingStrategy class
-strategy = Backtest(
+strategy = backtest(
     name="Momentum Strategy",
     description="Invest in high-performing assets over a certain period",
     asset_prices=price_TS,
     signal=signal
 )
+
+print(strategy.calculate_summary_statistics())
+
 
 # plot cumulative pnl
 fig = px.line(line)

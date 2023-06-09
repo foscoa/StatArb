@@ -1,9 +1,7 @@
 
-import yfinance as yf
-import random
 import pymongo
 import numpy as np
-import time
+
 
 
 def update_Nasdaq_Data(last_nasdaq_data, collection):
