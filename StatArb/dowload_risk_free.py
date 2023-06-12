@@ -22,14 +22,14 @@ rf_dates = np.unique(rf_dates)
 
 for date in rf_dates:
     temp_list = []
-    for k in json_rf.refRates:
+    for item_dict in json_rf.refRates:
         # filet for SOFR or EFFR:
-        if ('SOFR' in k.values()) or ('EFFR' in k.values()):
-            temp_list.append(dict((key, k[key]) for key in ['type', 'percentRate']))
+        if (item_dict['effectiveDate'] == date) and (('SOFR' in item_dict.values()) or ('EFFR' in item_dict.values())):
+            temp_list.append(dict((key, item_dict[key]) for key in ['type', 'percentRate']))
 
     date_obj = datetime.strptime(date, '%Y-%m-%d')
     iso_date = date_obj.isoformat()
-    collection.insert_one({iso_date:temp_list})
+    collection.insert_one({'timestamp': iso_date, 'Data': temp_list})
 
 
 
