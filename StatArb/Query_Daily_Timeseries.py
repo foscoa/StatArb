@@ -120,9 +120,9 @@ def calculate_log_returns(asset_prices):
     return log_returns
 
 # Specify the symbols you want to retrieve the time series for
-symbols = ['CVX', 'STZ']
-start = '2001-01-02'
-end = '2005-01-30'
+symbols = ['AAPL', 'KO']
+start = '2015-01-02'
+end = '2023-01-30'
 param = 'Adj Close'
 
 price_TS = generateTimeSeriesEquity(symbols      = symbols,
@@ -152,12 +152,12 @@ log_returns.index = price_TS.index[1:]
 
 # signal, long CVX short STZ
 signal = price_TS*0
-signal.CVX = signal.CVX - 1
-signal.STZ = signal.STZ + 1
+signal[symbols[0]] =- 1
+signal[symbols[1]] += 1
 
 PT_log_returns = signal*log_returns
 PT_log_returns.fillna(0, inplace=True)
-PT_aggr = pd.DataFrame(data=PT_log_returns.sum(axis=1), columns=['Portfolio'])
+PT_aggr = pd.DataFrame(data=PT_log_returns.sum(axis=1)+1, columns=['Portfolio'])
 line = PT_aggr.cumprod()
 
 # drawdown
@@ -192,10 +192,22 @@ class backtest:
     def drawdown(self):
 
         PT_cum_ret = self.portfolio_cumulative_log_returns()
-        DD = PT_cum_ret - PT_cum_ret.cummax()
+        DD = (PT_cum_ret - PT_cum_ret.cummax())
 
         return DD
 
+    def max_DD(self):
+        PT_cum_ret = self.portfolio_cumulative_log_returns()
+
+        DD = self.drawdown()
+        through = DD.idxmin()
+        when_through = pd.to_datetime(through.values[0])
+        start_DDs = DD[DD == 0].dropna().index
+        when_peak_max_DD = start_DDs[start_DDs < when_through][-1]
+        maxDD = 1 - float(PT_cum_ret[PT_cum_ret.index == when_through].values[0]) / float(
+            PT_cum_ret[PT_cum_ret.index == when_peak_max_DD].values[0])
+
+        return maxDD
 
     def calculate_summary_statistics(self):
 
@@ -206,7 +218,7 @@ class backtest:
 
         summary_stat["ann. mean"] = float(PT_log_returns.mean().values) * 252
         summary_stat["ann. std"] = float(PT_log_returns.std().values) * np.sqrt(252)
-        summary_stat["max DD"] = float(self.drawdown().min().values)
+        summary_stat["max DD"] = self.max_DD()
         summary_stat["sharpe ratio"] = float(PT_excess_returns.mean().values)*252/\
                                        (float(PT_log_returns.std().values) * np.sqrt(252))
 
@@ -228,7 +240,6 @@ print(strategy.calculate_summary_statistics())
 # plot cumulative pnl
 fig = px.line(strategy.portfolio_cumulative_log_returns())
 fig.show()
-
 
 
 
