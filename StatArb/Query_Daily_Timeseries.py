@@ -6,6 +6,9 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime
 import numpy as np
+from dash import Dash, html, dcc
+
+app = Dash(__name__)
 
 # Step 2 - create a mongodb client, use default local host
 try:
@@ -120,7 +123,7 @@ def calculate_log_returns(asset_prices):
     return log_returns
 
 # Specify the symbols you want to retrieve the time series for
-symbols = ['AAPL', 'KO']
+symbols = ['CVX', 'STZ']
 start = '2015-01-02'
 end = '2023-01-30'
 param = 'Adj Close'
@@ -145,22 +148,28 @@ EFFR_TS = EFFR_TS.interpolate()
 # EFFR_smoothed['EFFR'][0:(window_size-1)] = EFFR_TS['EFFR'][0:(window_size-1)]
 EFFR_TS = EFFR_TS/(100*252)
 
-# calculate log returns
-log_returns = np.log(price_TS).shift(-1) - np.log(price_TS)
-log_returns = log_returns.drop(log_returns.index[-1])
-log_returns.index = price_TS.index[1:]
 
 # signal, long CVX short STZ
 signal = price_TS*0
 signal[symbols[0]] =- 1
 signal[symbols[1]] += 1
 
-PT_log_returns = signal*log_returns
-PT_log_returns.fillna(0, inplace=True)
-PT_aggr = pd.DataFrame(data=PT_log_returns.sum(axis=1)+1, columns=['Portfolio'])
-line = PT_aggr.cumprod()
+def generateRandomSignal(signal):
+    # Set the random seed for reproducibility (optional)
+    random_signal = signal
 
-# drawdown
+    for i in signal.columns:
+
+        # Define the dimensions of the DataFrame
+        num_rows = signal.shape[0]
+        num_cols = 1
+
+        # Generate a random DataFrame
+        random_signal[i] = 2*np.random.rand(num_rows, num_cols)-1
+
+    return random_signal
+
+signal = generateRandomSignal(signal)
 
 class backtest:
     def __init__(self,
@@ -196,18 +205,12 @@ class backtest:
 
         return DD
 
-    def max_DD(self):
+    def drawdown_prc(self):
+
         PT_cum_ret = self.portfolio_cumulative_log_returns()
+        DD = (PT_cum_ret/PT_cum_ret.cummax()) - 1
 
-        DD = self.drawdown()
-        through = DD.idxmin()
-        when_through = pd.to_datetime(through.values[0])
-        start_DDs = DD[DD == 0].dropna().index
-        when_peak_max_DD = start_DDs[start_DDs < when_through][-1]
-        maxDD = 1 - float(PT_cum_ret[PT_cum_ret.index == when_through].values[0]) / float(
-            PT_cum_ret[PT_cum_ret.index == when_peak_max_DD].values[0])
-
-        return maxDD
+        return DD
 
     def calculate_summary_statistics(self):
 
@@ -218,12 +221,11 @@ class backtest:
 
         summary_stat["ann. mean"] = float(PT_log_returns.mean().values) * 252
         summary_stat["ann. std"] = float(PT_log_returns.std().values) * np.sqrt(252)
-        summary_stat["max DD"] = self.max_DD()
+        summary_stat["max DD"] = float(self.drawdown_prc().min().values)
         summary_stat["sharpe ratio"] = float(PT_excess_returns.mean().values)*252/\
                                        (float(PT_log_returns.std().values) * np.sqrt(252))
 
         return summary_stat
-
 
 
 # Create an instance of the TradingStrategy class
@@ -239,9 +241,22 @@ print(strategy.calculate_summary_statistics())
 
 # plot cumulative pnl
 fig = px.line(strategy.portfolio_cumulative_log_returns())
-fig.show()
 
+app.layout = html.Div(children=[
+    html.H1(children='Hello Dash'),
 
+    html.Div(children='''
+        Dash: A web application framework for your data.
+    '''),
+
+    dcc.Graph(
+        id='example-graph',
+        figure=fig
+    )
+])
+
+if __name__ == '__main__':
+    app.run_server(debug=False)
 
 
 
