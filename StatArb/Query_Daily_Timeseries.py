@@ -3,7 +3,8 @@ import pymongo
 # Step 1 - Install and import pymongo
 import pymongo
 import pandas as pd
-import plotly.express as px
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
 from dash import Dash, html, dcc
@@ -212,6 +213,17 @@ class backtest:
 
         return DD
 
+    def cagr(self):
+
+        PT_cum_ret = self.portfolio_cumulative_log_returns()
+
+        days = PT_cum_ret.index[-1] - PT_cum_ret.index[0]
+        years = days.days/365
+
+        cagr = (float(PT_cum_ret.values[-1])**(1/years))-1
+
+        return cagr
+
     def calculate_summary_statistics(self):
 
         summary_stat = {}
@@ -224,13 +236,14 @@ class backtest:
         summary_stat["max DD"] = float(self.drawdown_prc().min().values)
         summary_stat["sharpe ratio"] = float(PT_excess_returns.mean().values)*252/\
                                        (float(PT_log_returns.std().values) * np.sqrt(252))
+        summary_stat["CAGR"] = self.cagr()
 
         return summary_stat
 
 
 # Create an instance of the TradingStrategy class
 strategy = backtest(
-    name="Momentum Strategy",
+    name="Long/Short CVX STZ",
     description="Invest in high-performing assets over a certain period",
     asset_prices=price_TS,
     signal=signal
@@ -240,7 +253,55 @@ print(strategy.calculate_summary_statistics())
 
 
 # plot cumulative pnl
-fig = px.line(strategy.portfolio_cumulative_log_returns())
+
+
+fig = make_subplots(rows=2,
+                    cols=1,
+                    shared_xaxes=True,
+                    vertical_spacing=0.02,
+                    row_heights=[0.8, 0.2]
+                    )
+
+fig.add_trace(
+    go.Scatter(
+        x=strategy.portfolio_cumulative_log_returns().index.to_list(),
+        y=strategy.portfolio_cumulative_log_returns()['Portfolio'].to_list()
+    ),
+    row=1,
+    col=1)
+
+fig.add_trace(
+    go.Scatter(
+        x=strategy.drawdown_prc().index.to_list(),
+        y=strategy.drawdown_prc()['Portfolio'].to_list(),
+        fill='tozeroy',
+        line_color="darkred",
+    ),
+    row=2,
+    col=1)
+
+fig.update_yaxes(tickformat='.2%',
+                 row=2,
+                 col=1)
+
+fig.update_layout(
+    title=strategy.name + "<br>"
+          + "<sub>"
+            + "CAGR = " + str(round(strategy.calculate_summary_statistics()['CAGR']*100, 2)) + "%,   "
+            + "mean p.a. = " + str(round(strategy.calculate_summary_statistics()['ann. mean']*100, 2)) + "%,   "
+            + "std p.a. = " + str(round(strategy.calculate_summary_statistics()['ann. std']*100, 2)) + "%,   "
+            + "max DD = " + str(round(strategy.calculate_summary_statistics()['max DD']*100, 2)) + "%,   "
+            + "sharpe ratio = " + str(round(strategy.calculate_summary_statistics()['sharpe ratio'], 2)) +
+                                                                                                              
+          " </sub>" +
+
+          "<br>"
+
+)
+
+fig.show()
+
+
 
 app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
@@ -256,7 +317,7 @@ app.layout = html.Div(children=[
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=False, port=5000)
 
 
 
