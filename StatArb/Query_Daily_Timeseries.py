@@ -7,7 +7,11 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, dash_table
+from dash.dash_table import FormatTemplate
+import calendar
+import seaborn as sns
+import matplotlib
 
 app = Dash(__name__)
 
@@ -169,10 +173,10 @@ def generateRandomSignal(signal):
         random_signal[i] = 2*np.random.rand(num_rows, num_cols)-1
 
     return random_signal
-
 signal = generateRandomSignal(signal)
 
-class backtest:
+
+class BacktestTradingStrategy:
     def __init__(self,
                  name           = "",
                  description    = "",
@@ -198,6 +202,50 @@ class backtest:
         PT_cum_ret = (self.portfolio_log_returns()+1).cumprod()
 
         return PT_cum_ret
+
+    def portfolio_monthly_returns(self):
+        # development ground
+        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        monthly_returns = {}
+
+        for year in PT_cum_ret.index.year.unique():
+            PT_cum_ret_year = PT_cum_ret[PT_cum_ret.index.year == year]
+            for month in PT_cum_ret_year.index.month.unique():
+                PT_cum_ret_month = PT_cum_ret_year[PT_cum_ret_year.index.month == month]
+                monthly_returns[calendar.month_abbr[month] + "-" + str(year)] = \
+                    PT_cum_ret_month['Portfolio'][-1] / PT_cum_ret_month['Portfolio'][0] - 1
+
+        return monthly_returns
+
+    def portfolio_YTD_returns(self):
+        # development ground
+        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        YTD_returns = {}
+
+        for year in PT_cum_ret.index.year.unique():
+            PT_cum_ret_year = PT_cum_ret[PT_cum_ret.index.year == year]
+
+            YTD_returns["YTD-" + str(year)] = \
+                    PT_cum_ret_year['Portfolio'][-1] / PT_cum_ret_year['Portfolio'][0] - 1
+
+        return YTD_returns
+
+    def portfolio_monthly_returns_table(self):
+        # develop
+        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        monthy_returns_table = pd.DataFrame(data=[],
+                                            columns=calendar.month_abbr[1:13] + ["YTD"],
+                                            index=PT_cum_ret.index.year.unique()[::-1])
+
+        for year in PT_cum_ret.index.year.unique():
+            PT_cum_ret_year = PT_cum_ret[PT_cum_ret.index.year == year]
+            monthy_returns_table["YTD"][year] = PT_cum_ret_year['Portfolio'][-1] / PT_cum_ret_year['Portfolio'][0] - 1
+            for month in PT_cum_ret_year.index.month.unique():
+                PT_cum_ret_month = PT_cum_ret_year[PT_cum_ret_year.index.month == month]
+                monthy_returns_table[calendar.month_abbr[month]][year] = \
+                    PT_cum_ret_month['Portfolio'][-1] / PT_cum_ret_month['Portfolio'][0] - 1
+
+        return monthy_returns_table
 
     def drawdown(self):
 
@@ -240,81 +288,145 @@ class backtest:
 
         return summary_stat
 
+    def generate_report(self):
+
+        fig = make_subplots(rows=2,
+                            cols=1,
+                            shared_xaxes=True,
+                            vertical_spacing=0.02,
+                            row_heights=[0.8, 0.2]
+                            )
+
+        fig.add_trace(
+            go.Scatter(
+                x=self.portfolio_cumulative_log_returns().index.to_list(),
+                y=self.portfolio_cumulative_log_returns()['Portfolio'].to_list(),
+                line_color='cadetblue'
+            ),
+            row=1,
+            col=1)
+
+        fig.add_trace(
+            go.Scatter(
+                x=self.drawdown_prc().index.to_list(),
+                y=self.drawdown_prc()['Portfolio'].to_list(),
+                fill='tozeroy',
+                line_color="darkred",
+            ),
+            row=2,
+            col=1)
+
+        fig.update_yaxes(tickformat='.2%',
+                         row=2,
+                         col=1)
+
+        fig.update_layout(
+            title=strategy.name + "<br>"
+                  + "<sub>"
+                  + "CAGR = " + str(round(self.calculate_summary_statistics()['CAGR'] * 100, 2)) + "%,   "
+                  + "mean p.a. = " + str(round(self.calculate_summary_statistics()['ann. mean'] * 100, 2)) + "%,   "
+                  + "std p.a. = " + str(round(self.calculate_summary_statistics()['ann. std'] * 100, 2)) + "%,   "
+                  + "max DD = " + str(round(self.calculate_summary_statistics()['max DD'] * 100, 2)) + "%,   "
+                  + "sharpe ratio = " + str(round(self.calculate_summary_statistics()['sharpe ratio'], 2)) +
+
+                  " </sub>" +
+
+                  "<br>"
+
+        )
+
+        return fig
+
 
 # Create an instance of the TradingStrategy class
-strategy = backtest(
+strategy = BacktestTradingStrategy(
     name="Long/Short CVX STZ",
     description="Invest in high-performing assets over a certain period",
     asset_prices=price_TS,
     signal=signal
 )
 
-print(strategy.calculate_summary_statistics())
+strategy.generate_report().show()
+
+# develop
+
+my_df = strategy.portfolio_monthly_returns_table()
+my_df.insert(0, 'Year', my_df.index)
+percentage = FormatTemplate.percentage(2)
+
+n_palette = 60
+min_color = -0.4
+max_color = 0.4
+
+master_palette = [matplotlib.colors.to_hex(color) for color in sns.color_palette('Reds', int(n_palette/2))][::-1] +\
+                 ['#ffffff'] + \
+                 [matplotlib.colors.to_hex(color) for color in sns.color_palette('Greens', int(n_palette/2))]
+filter = np.linspace(start=min_color, stop=max_color, num=len(master_palette)+1)
+
+[{'if': {
+	'filter_query': '{Jan} > ' + str(filter[i]) + ' && {Jan} < ' + str(filter[i+1]),
+            'column_id': 'Jan',
+            },
+            'backgroundColor': str(master_palette[i]),
+       }for i in range(0, n_palette)]
 
 
-# plot cumulative pnl
+app.layout = html.Div(
+    children=[
+        html.Div(
+            children=[
+                dcc.Graph(
+                    id='example-graph',
+                    figure=strategy.generate_report(),
+                    style= {'height': '70vh'}
+                ),
+            ],
+            style={'height': '70vh'}
+        ),
+
+        html.Div(
+            children=[
+                dash_table.DataTable(
+                    data=my_df.to_dict('records'),
+                    columns=[{'id': my_df.columns[0], 'name': my_df.columns[0]}] +
+                            [{'id': c, 'name': c, 'type': 'numeric', 'format': percentage} for c in my_df.columns[1:]],
+                    css=[{'selector': 'table', 'rule': 'table-layout: fixed'}],
+                    style_cell={
+                        'width': '{}%'.format(len(my_df.columns))
+                    },
+                    style_data_conditional=[
+                        {
+                            'if': {
+                                'column_id': 'YTD'
+                            },
+                            'fontWeight': 'bold',
+                            'border-left': 'double'
+                        },
+                        {
+                            'if': {
+                                'column_id': 'Year'
+                            },
+                            'fontWeight': 'bold',
+                            'border-right': 'double'
+                        },
+
+                    ] + [
+                        {
+                            'if': {
+                                'filter_query': '{Jan} > ' + str(filter[i]) + ' && {Jan} < ' + str(filter[i+1]),
+                                'column_id': 'Jan'},
+                            'backgroundColor': str(master_palette[i])
+                        } for i in range(0, n_palette)
+                    ]
 
 
-fig = make_subplots(rows=2,
-                    cols=1,
-                    shared_xaxes=True,
-                    vertical_spacing=0.02,
-                    row_heights=[0.8, 0.2]
-                    )
+                )
+            ],
+            style={'marginLeft': 80, 'marginRight': 120}
+        ),
 
-fig.add_trace(
-    go.Scatter(
-        x=strategy.portfolio_cumulative_log_returns().index.to_list(),
-        y=strategy.portfolio_cumulative_log_returns()['Portfolio'].to_list()
-    ),
-    row=1,
-    col=1)
-
-fig.add_trace(
-    go.Scatter(
-        x=strategy.drawdown_prc().index.to_list(),
-        y=strategy.drawdown_prc()['Portfolio'].to_list(),
-        fill='tozeroy',
-        line_color="darkred",
-    ),
-    row=2,
-    col=1)
-
-fig.update_yaxes(tickformat='.2%',
-                 row=2,
-                 col=1)
-
-fig.update_layout(
-    title=strategy.name + "<br>"
-          + "<sub>"
-            + "CAGR = " + str(round(strategy.calculate_summary_statistics()['CAGR']*100, 2)) + "%,   "
-            + "mean p.a. = " + str(round(strategy.calculate_summary_statistics()['ann. mean']*100, 2)) + "%,   "
-            + "std p.a. = " + str(round(strategy.calculate_summary_statistics()['ann. std']*100, 2)) + "%,   "
-            + "max DD = " + str(round(strategy.calculate_summary_statistics()['max DD']*100, 2)) + "%,   "
-            + "sharpe ratio = " + str(round(strategy.calculate_summary_statistics()['sharpe ratio'], 2)) +
-                                                                                                              
-          " </sub>" +
-
-          "<br>"
-
+    ]
 )
-
-fig.show()
-
-
-
-app.layout = html.Div(children=[
-    html.H1(children='Hello Dash'),
-
-    html.Div(children='''
-        Dash: A web application framework for your data.
-    '''),
-
-    dcc.Graph(
-        id='example-graph',
-        figure=fig
-    )
-])
 
 if __name__ == '__main__':
     app.run_server(debug=False, port=5000)
