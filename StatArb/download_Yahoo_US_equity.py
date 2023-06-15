@@ -124,7 +124,17 @@ end_date = '2023-05-01'
 defect_tickers = []
 # dowload_All_YF_Universe()
 
+temp_yf = yf.download(['^SPX', '^IXIC'],
+                      group_by='Ticker',
+                      start=start_date,
+                      end=end_date)
 
+json_new = yf_to_JSON(temp_yf)
+
+# select Nasdaq_Data collection
+collection_TS = client.Financial_Data.Indices
+
+update_Daily_Timeseries(json_new, collection_TS)
 
 
 

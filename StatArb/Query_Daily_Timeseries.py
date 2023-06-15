@@ -24,6 +24,7 @@ except Exception:
 # select the collection
 collection_equity = client.Financial_Data.Daily_Timeseries
 collection_rates = client.Financial_Data.Risk_Free
+collection_BM = client.Financial_Data.Indices
 
 def generateTimeSeriesEquity(symbols, start, end, param, collection):
     # Convert to ISO 8601 format
@@ -129,6 +130,7 @@ def calculate_log_returns(asset_prices):
 
 # Specify the symbols you want to retrieve the time series for
 symbols = ['CVX', 'STZ']
+benchmark = ['^SPX']
 start = '2015-01-02'
 end = '2023-01-30'
 param = 'Adj Close'
@@ -143,6 +145,12 @@ rates_TS = generateTimeSeriesRates(start         = start,
                                    end           = end,
                                    collection    = collection_rates)
 
+price_BM = generateTimeSeriesEquity(symbols      = benchmark,
+                                    start        = start,
+                                    end          = end,
+                                    param        = param,
+                                    collection   = collection_BM)
+
 # Merge the two DataFrames based on a common time index
 EFFR_TS = pd.DataFrame(pd.merge(price_TS , rates_TS, left_index=True, right_index=True, how='left')['EFFR'])
 # Interpolate the missing values
@@ -152,6 +160,16 @@ EFFR_TS = EFFR_TS.interpolate()
 # EFFR_smoothed = EFFR_TS.rolling(window_size).mean()
 # EFFR_smoothed['EFFR'][0:(window_size-1)] = EFFR_TS['EFFR'][0:(window_size-1)]
 EFFR_TS = EFFR_TS/(100*252)
+
+
+# Merge the two DataFrames based on a common time index
+BM_TS = pd.DataFrame(pd.merge(price_TS, price_BM, left_index=True, right_index=True, how='left')['^SPX'])
+# Interpolate the missing values
+BM_TS = BM_TS.interpolate()
+
+BM_log_returns = calculate_log_returns(BM_TS)
+BM_log_returns.fillna(0, inplace=True)
+BM_cum_log_returns = pd.DataFrame(data=BM_log_returns.sum(axis=1)+1, columns=['Bemchmark']).cumprod()
 
 
 # signal, long CVX short STZ
@@ -182,11 +200,13 @@ class BacktestTradingStrategy:
                  description    = "",
                  asset_prices   = np.nan,
                  risk_free      = np.nan,
+                 benchmark      = np.nan,
                  signal         = np.nan):
         self.name = name
         self.description = description
         self.asset_prices = asset_prices
         self.risk_free = risk_free
+        self.benchmark = benchmark
         self.signal = signal
 
     def portfolio_log_returns(self):
@@ -290,6 +310,10 @@ class BacktestTradingStrategy:
 
     def generate_report(self):
 
+        BM_log_returns = calculate_log_returns(self.benchmark)
+        BM_log_returns.fillna(0, inplace=True)
+        BM_cum_log_returns = pd.DataFrame(data=BM_log_returns.sum(axis=1) + 1, columns=['Bemchmark']).cumprod()
+
         fig = make_subplots(rows=2,
                             cols=1,
                             shared_xaxes=True,
@@ -302,6 +326,15 @@ class BacktestTradingStrategy:
                 x=self.portfolio_cumulative_log_returns().index.to_list(),
                 y=self.portfolio_cumulative_log_returns()['Portfolio'].to_list(),
                 line_color='cadetblue'
+            ),
+            row=1,
+            col=1)
+
+        fig.add_trace(
+            go.Scatter(
+                x=BM_cum_log_returns.index.to_list(),
+                y=BM_cum_log_returns['Bemchmark'].to_list(),
+                line_color='tan'
             ),
             row=1,
             col=1)
@@ -396,6 +429,7 @@ strategy = BacktestTradingStrategy(
     name="Long/Short CVX STZ",
     description="Invest in high-performing assets over a certain period",
     asset_prices=price_TS,
+    benchmark=BM_TS,
     signal=signal
 )
 
