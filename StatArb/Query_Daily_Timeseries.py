@@ -167,11 +167,6 @@ BM_TS = pd.DataFrame(pd.merge(price_TS, price_BM, left_index=True, right_index=T
 # Interpolate the missing values
 BM_TS = BM_TS.interpolate()
 
-BM_log_returns = calculate_log_returns(BM_TS)
-BM_log_returns.fillna(0, inplace=True)
-BM_cum_log_returns = pd.DataFrame(data=BM_log_returns.sum(axis=1)+1, columns=['Bemchmark']).cumprod()
-
-
 # signal, long CVX short STZ
 signal = price_TS*0
 signal[symbols[0]] =- 1
