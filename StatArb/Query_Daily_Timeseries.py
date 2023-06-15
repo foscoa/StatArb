@@ -337,56 +337,24 @@ class BacktestTradingStrategy:
 
         return fig
 
+    def generate_dash_monthly_returns_table(self):
 
-# Create an instance of the TradingStrategy class
-strategy = BacktestTradingStrategy(
-    name="Long/Short CVX STZ",
-    description="Invest in high-performing assets over a certain period",
-    asset_prices=price_TS,
-    signal=signal
-)
+        my_df = self.portfolio_monthly_returns_table()
+        my_df.insert(0, 'Year', my_df.index)
+        percentage = FormatTemplate.percentage(2)
 
-strategy.generate_report().show()
+        n_palette = 40
+        min_color = -0.3
+        max_color = 0.3
 
-# develop
+        master_palette = [matplotlib.colors.to_hex(color) for color in
+                          sns.diverging_palette(h_neg=0, h_pos=100, l=50, s=360, n=n_palette + 1, as_cmap=False)]
 
-my_df = strategy.portfolio_monthly_returns_table()
-my_df.insert(0, 'Year', my_df.index)
-percentage = FormatTemplate.percentage(2)
+        filter = np.linspace(start=min_color, stop=max_color, num=len(master_palette) - 1)
+        filter = np.insert(filter, 0, -1)
+        filter = np.append(filter, 10)
 
-n_palette = 60
-min_color = -0.4
-max_color = 0.4
-
-master_palette = [matplotlib.colors.to_hex(color) for color in sns.color_palette('Reds', int(n_palette/2))][::-1] +\
-                 ['#ffffff'] + \
-                 [matplotlib.colors.to_hex(color) for color in sns.color_palette('Greens', int(n_palette/2))]
-filter = np.linspace(start=min_color, stop=max_color, num=len(master_palette)+1)
-
-[{'if': {
-	'filter_query': '{Jan} > ' + str(filter[i]) + ' && {Jan} < ' + str(filter[i+1]),
-            'column_id': 'Jan',
-            },
-            'backgroundColor': str(master_palette[i]),
-       }for i in range(0, n_palette)]
-
-
-app.layout = html.Div(
-    children=[
-        html.Div(
-            children=[
-                dcc.Graph(
-                    id='example-graph',
-                    figure=strategy.generate_report(),
-                    style= {'height': '70vh'}
-                ),
-            ],
-            style={'height': '70vh'}
-        ),
-
-        html.Div(
-            children=[
-                dash_table.DataTable(
+        return dash_table.DataTable(
                     data=my_df.to_dict('records'),
                     columns=[{'id': my_df.columns[0], 'name': my_df.columns[0]}] +
                             [{'id': c, 'name': c, 'type': 'numeric', 'format': percentage} for c in my_df.columns[1:]],
@@ -413,14 +381,44 @@ app.layout = html.Div(
                     ] + [
                         {
                             'if': {
-                                'filter_query': '{Jan} > ' + str(filter[i]) + ' && {Jan} < ' + str(filter[i+1]),
-                                'column_id': 'Jan'},
+                                'filter_query': '{'+ j +'} > ' + str(filter[i]) + ' && {'+ j +'} < ' + str(filter[i+1]),
+                                'column_id': j},
                             'backgroundColor': str(master_palette[i])
-                        } for i in range(0, n_palette)
+                        } for i in range(0, n_palette+1) for j in strategy.portfolio_monthly_returns_table().columns
                     ]
 
 
                 )
+
+
+# Create an instance of the TradingStrategy class
+strategy = BacktestTradingStrategy(
+    name="Long/Short CVX STZ",
+    description="Invest in high-performing assets over a certain period",
+    asset_prices=price_TS,
+    signal=signal
+)
+
+
+# develop
+
+
+app.layout = html.Div(
+    children=[
+        html.Div(
+            children=[
+                dcc.Graph(
+                    id='example-graph',
+                    figure=strategy.generate_report(),
+                    style= {'height': '70vh'}
+                ),
+            ],
+            style={'height': '70vh'}
+        ),
+
+        html.Div(
+            children=[
+                strategy.generate_dash_monthly_returns_table()
             ],
             style={'marginLeft': 80, 'marginRight': 120}
         ),
