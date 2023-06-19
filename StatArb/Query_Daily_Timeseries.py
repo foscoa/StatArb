@@ -119,7 +119,6 @@ def generateTimeSeriesRates(start, end, collection):
     # Display the resulting time series DataFrame
     return df
 
-
 def calculate_log_returns(asset_prices):
     # calculate log returns
     log_returns = np.log(asset_prices).shift(-1) - np.log(asset_prices)
@@ -129,7 +128,7 @@ def calculate_log_returns(asset_prices):
     return log_returns
 
 # Specify the symbols you want to retrieve the time series for
-symbols = ['CVX', 'STZ']
+symbols = ['AAPL', 'META']
 benchmark = ['^SPX']
 start = '2015-01-02'
 end = '2023-01-30'
