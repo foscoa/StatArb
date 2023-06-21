@@ -128,10 +128,13 @@ def calculate_log_returns(asset_prices):
     return log_returns
 
 # Specify the symbols you want to retrieve the time series for
+
+
 symbols = ['AAPL', 'META']
 benchmark = ['^SPX']
 start = '2015-01-02'
-end = '2023-01-30'
+end = '2023-06-16'
+print("Last day in time series is " + str(list(collection_equity.distinct("timestamp"))[-1]))
 param = 'Adj Close'
 
 price_TS = generateTimeSeriesEquity(symbols      = symbols,
@@ -168,7 +171,7 @@ BM_TS = BM_TS.interpolate()
 
 # signal, long CVX short STZ
 signal = price_TS*0
-signal[symbols[0]] =- 1
+signal[symbols[0]] += 0.5
 signal[symbols[1]] += 1
 
 def generateRandomSignal(signal):
@@ -185,7 +188,7 @@ def generateRandomSignal(signal):
         random_signal[i] = 2*np.random.rand(num_rows, num_cols)-1
 
     return random_signal
-signal = generateRandomSignal(signal)
+# signal = generateRandomSignal(signal)
 
 
 class BacktestTradingStrategy:

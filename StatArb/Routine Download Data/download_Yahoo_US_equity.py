@@ -144,17 +144,44 @@ def update_existing_symbol_Daily_Timeseries(start_date,
 
 
         # print progress percentage
-        print('[*********************'
-              + str(round(len(remaining_tickers) / nr_symbol * 100, 3))
+        try: print('[*********************'
+              + str(round(1-(len(remaining_tickers) / nr_symbol) * 100, 3))
               + "%" +
               '**********************]  ' +
               str(len(remaining_tickers)) +
               ' of '
               + str(nr_symbol) +
               ' completed\nFollowing tickers have been added: ' + str(tickers_to_download))
+        except:
+            print("program is done")
 
         # pause program for a random time
         time.sleep(random.randint(2, 7))
+
+
+def update_existing_symbol_Indices(start_date,
+                                   end_date,
+                                   collection,
+                                   indices):
+    """
+
+    :param start_date: included
+    :param end_date: excluded
+    :param collection:
+    :return:
+    """
+
+    # download data from yahoo finance
+    temp_yf = yf.download(indices,
+                          group_by='Ticker',
+                          start=start_date,
+                          end=end_date)
+
+
+    json_yf = yf_to_JSON(temp_yf)
+
+    update_Daily_Timeseries(json_yf, collection)
+
 
 
 # Create a mongodb client, use default local host
@@ -165,44 +192,30 @@ except Exception:
 
 
 # daily routine to append latest data
-collection_Daily_Timeseries = client.Financial_Data.Daily_Timeseries
+collection_equity = client.Financial_Data.Daily_Timeseries
 
 # Retrieve all days
 # days = list(collection_Daily_Timeseries.distinct("timestamp"))
 
-start_time = time.time()
 
-update_existing_symbol_Daily_Timeseries(start_date='2023-05-02',
-                                        end_date='2023-05-02',
-                                        collection=collection_Daily_Timeseries)
+update_existing_symbol_Daily_Timeseries(start_date='2023-05-16',
+                                        end_date=datetime.today().strftime("%Y-%m-%d"),
+                                        collection=collection_equity)
 
 # delete_Daily_Timeseries(start_date='2023-05-01', end_date='2023-05-02', collection=collection_Daily_Timeseries)
 
-end_time = time.time()
-execution_time = end_time - start_time
 
-print("Execution time: ", execution_time, " seconds")
+#### Indices ####
 
+collection_BM = client.Financial_Data.Indices
 
+# Retrieve all days
+# days = list(collection_BM.distinct("timestamp"))
 
-
-# Start time series
-start_date = '2023-05-01'
-end_date = '2023-05-02'
-defect_tickers = []
-# dowload_All_YF_Universe()
-
-temp_yf = yf.download(['^SPX', '^IXIC'],
-                      group_by='Ticker',
-                      start=start_date,
-                      end=end_date)
-
-json_new = yf_to_JSON(temp_yf)
-
-# select Nasdaq_Data collection
-collection_TS = client.Financial_Data.Indices
-
-update_Daily_Timeseries(json_new, collection_TS)
+update_existing_symbol_Indices(start_date='2023-05-16',
+                               end_date=datetime.today().strftime("%Y-%m-%d"),
+                               collection=collection_BM,
+                               indices=['^IXIC', '^SPX'])
 
 
 
