@@ -130,7 +130,7 @@ def calculate_log_returns(asset_prices):
 # Specify the symbols you want to retrieve the time series for
 
 
-symbols = ['AAPL', 'META']
+symbols = ['CVX', 'STZ']
 benchmark = ['^SPX']
 start = '2015-01-02'
 end = '2023-06-16'
@@ -378,7 +378,7 @@ class BacktestTradingStrategy:
         max_color = 0.3
 
         master_palette = [matplotlib.colors.to_hex(color) for color in
-                          sns.diverging_palette(h_neg=0, h_pos=100, l=50, s=360, n=n_palette + 1, as_cmap=False)]
+                          sns.diverging_palette(h_neg=10, h_pos=120, l=50, s=100, n=n_palette + 1, as_cmap=False)]
 
         filter = np.linspace(start=min_color, stop=max_color, num=len(master_palette) - 1)
         filter = np.insert(filter, 0, -1)
@@ -411,7 +411,8 @@ class BacktestTradingStrategy:
                     ] + [
                         {
                             'if': {
-                                'filter_query': '{'+ j +'} > ' + str(filter[i]) + ' && {'+ j +'} < ' + str(filter[i+1]),
+                                'filter_query': '{'+ j +'} > ' + str(filter[i]) + ' && {'+ j +'} < ' + str(filter[i+1])
+                                                + ' && {' + j + '} !=0',
                                 'column_id': j},
                             'backgroundColor': str(master_palette[i])
                         } for i in range(0, n_palette+1) for j in strategy.portfolio_monthly_returns_table().columns
