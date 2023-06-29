@@ -1,17 +1,19 @@
-import pymongo
-
 # Step 1 - Install and import pymongo
-import pymongo
-import pandas as pd
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
+import calendar
 from datetime import datetime
+
+import matplotlib
 import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import pymongo
+import seaborn as sns
 from dash import Dash, html, dcc, dash_table
 from dash.dash_table import FormatTemplate
-import calendar
-import seaborn as sns
-import matplotlib
+from plotly.subplots import make_subplots
+from StatArb.utils.query_mongoDB_functions import *
+from StatArb.utils.routine_functions import *
+
 
 app = Dash(__name__)
 
@@ -26,128 +28,26 @@ collection_equity = client.Financial_Data.Daily_Timeseries
 collection_rates = client.Financial_Data.Risk_Free
 collection_BM = client.Financial_Data.Indices
 
-def generateTimeSeriesEquity(symbols, start, end, param, collection):
-    # Convert to ISO 8601 format
-    iso_start = datetime.strptime(start, '%Y-%m-%d').isoformat()
-    iso_end = datetime.strptime(end, '%Y-%m-%d').isoformat()
-
-    # Define the aggregation pipeline
-    pipeline = [
-        {'$match': {'Data.Symbol': {'$in': symbols},
-                    "timestamp": {"$gte": iso_start,
-                                  "$lt": iso_end}
-                    }
-         },
-        {'$unwind': '$Data'},
-        {'$match': {'Data.Symbol': {'$in': symbols}}},
-        {'$group': {'_id': '$timestamp', 'Data': {'$push': '$Data'}}},
-        {'$project': {'_id': 0, 'timestamp': '$_id', 'Data.Symbol': 1, 'Data.' + param: 1}}
-    ]
-
-    json_data = list(collection.aggregate(pipeline))
-
-    # Initialize empty lists to store the parsed data
-    timestamps = []
-    stock_data = {}
-
-    # Iterate over the JSON data and extract the required values
-    for item in json_data:
-        timestamp = pd.Timestamp(item['timestamp']).to_datetime64()
-        timestamps.append(timestamp)
-        for data in item['Data']:
-            symbol = data['Symbol']
-            adj_close = data['Adj Close']
-            if symbol not in stock_data:
-                stock_data[symbol] = []
-            stock_data[symbol].append(adj_close)
-
-    # Create the pandas DataFrame
-    df = pd.DataFrame(stock_data, index=timestamps)
-
-    # Sort the DataFrame by the index (timestamps)
-    df.sort_index(inplace=True)
-
-    # Convert the DataFrame index to a pandas datetime index
-    df.index = pd.to_datetime(df.index)
-
-    # Display the resulting time series DataFrame
-    return df
-
-def generateTimeSeriesRates(start, end, collection):
-    # Convert to ISO 8601 format
-    iso_start = datetime.strptime(start, '%Y-%m-%d').isoformat()
-    iso_end = datetime.strptime(end, '%Y-%m-%d').isoformat()
-
-    # Define the aggregation pipeline
-    pipeline = [
-        {'$match': {"timestamp": {"$gte": iso_start,
-                                  "$lt": iso_end}
-                    }
-         },
-        {'$unwind': '$Data'},
-        {'$group': {'_id': '$timestamp', 'Data': {'$push': '$Data'}}},
-        {'$project': {'_id': 0, 'timestamp': '$_id', 'Data': 1}}
-    ]
-
-    json_data = list(collection.aggregate(pipeline))
-
-    # Initialize empty lists to store the parsed data
-    timestamps = []
-    rates_data = {'EFFR':[], 'SOFR':[]}
-
-    # Iterate over the JSON data and extract the required values
-    for item in json_data:
-        timestamp = pd.Timestamp(item['timestamp']).to_datetime64()
-        timestamps.append(timestamp)
-        for data in item['Data']:
-            symbol = data['type']
-
-            if len(item['Data']) == 1:
-                rates_data['SOFR'].append(np.nan)
-
-            rates_data[symbol].append(data['percentRate'])
-
-    # Create the pandas DataFrame
-    df = pd.DataFrame(rates_data, index=timestamps)
-
-    # Sort the DataFrame by the index (timestamps)
-    df.sort_index(inplace=True)
-
-    # Convert the DataFrame index to a pandas datetime index
-    df.index = pd.to_datetime(df.index)
-
-    # Display the resulting time series DataFrame
-    return df
-
-def calculate_log_returns(asset_prices):
-    # calculate log returns
-    log_returns = np.log(asset_prices).shift(-1) - np.log(asset_prices)
-    log_returns = log_returns.drop(log_returns.index[-1])
-    log_returns.index = asset_prices.index[1:]
-
-    return log_returns
 
 # Specify the symbols you want to retrieve the time series for
-
-
 symbols = ['CVX', 'STZ']
 benchmark = ['^SPX']
 start = '2015-01-02'
-end = '2023-06-16'
+end = '2023-01-16'
 print("Last day in time series is " + str(list(collection_equity.distinct("timestamp"))[-1]))
 param = 'Adj Close'
 
-price_TS = generateTimeSeriesEquity(symbols      = symbols,
+price_TS = queryTimeSeriesEquity(symbols      = symbols,
                                     start        = start,
                                     end          = end,
                                     param        = param,
                                     collection   = collection_equity)
 
-rates_TS = generateTimeSeriesRates(start         = start,
+rates_TS = queryTimeSeriesRates(start         = start,
                                    end           = end,
                                    collection    = collection_rates)
 
-price_BM = generateTimeSeriesEquity(symbols      = benchmark,
+price_BM = queryTimeSeriesEquity(symbols      = benchmark,
                                     start        = start,
                                     end          = end,
                                     param        = param,

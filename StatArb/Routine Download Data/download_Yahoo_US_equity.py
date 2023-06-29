@@ -168,6 +168,7 @@ def update_existing_symbol_Indices(start_date,
     :param start_date: included
     :param end_date: excluded
     :param collection:
+    :param indeces: array of indeces to be downloaded
     :return:
     """
 
