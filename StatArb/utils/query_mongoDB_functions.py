@@ -94,3 +94,11 @@ def queryTimeSeriesRates(start, end, collection):
 
     # Display the resulting time series DataFrame
     return df
+
+def queryGetTickers(collection, date):
+    # gets all the tickers in Daily_Timeseries at a given date
+
+    # Convert to ISO 8601 format
+    iso_date = datetime.strptime(date, '%Y-%m-%d').isoformat()
+
+    return list(collection.distinct(key='Data.Symbol', filter={"timestamp": iso_date}))

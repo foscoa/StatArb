@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import plotly.express as px
+from StatArb.utils.query_mongoDB_functions import *
+from StatArb.utils.routine_functions import *
 
 
 class PairsTradingStrategy:
@@ -17,11 +19,16 @@ class PairsTradingStrategy:
         IN_sample_end_date = ""
 
 
-    def signal_generation(self, collection):
+    def signal_generation(self):
         # Perform data analysis and generate trading signals
         # This method should take historical data as input and return trading signals
+        stock_tickers_universe = queryGetTickers(collection, date)
 
-
+        stocks_time_series = queryTimeSeriesEquity(symbols      = stock_tickers_universe,
+                                                   start        = IN_sample_start_date,
+                                                   end          = IN_sample_end_date,
+                                                   param        = 'Adj Close',
+                                                   collection   = collection)
 
     def execute_trades(self, signals):
         # Execute trades based on the generated trading signals
