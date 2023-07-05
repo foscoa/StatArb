@@ -23,28 +23,31 @@ def queryTimeSeriesEquity(symbols, start, end, param, collection):
     json_data = list(collection.aggregate(pipeline))
 
     # Initialize empty lists to store the parsed data
-    timestamps = []
     stock_data = {}
+    df = pd.DataFrame()
 
     # Iterate over the JSON data and extract the required values
     for item in json_data:
         timestamp = pd.Timestamp(item['timestamp']).to_datetime64()
-        timestamps.append(timestamp)
         for data in item['Data']:
             symbol = data['Symbol']
             adj_close = data['Adj Close']
             if symbol not in stock_data:
                 stock_data[symbol] = []
-            stock_data[symbol].append(adj_close)
+            stock_data[symbol].append([adj_close, timestamp])
 
-    # Create the pandas DataFrame
-    df = pd.DataFrame(stock_data, index=timestamps)
+    # Create dataframe and merge
+    for j in stock_data.keys():
+        df_i = pd.DataFrame(stock_data[j], columns=[j, 'Date'])
+        df_i.set_index('Date', inplace=True)
+        # Sort the DataFrame by the index (timestamps)
+        df_i.sort_index(inplace=True)
 
-    # Sort the DataFrame by the index (timestamps)
-    df.sort_index(inplace=True)
+        # Convert the DataFrame index to a pandas datetime index
+        df_i.index = pd.to_datetime(df_i.index)
 
-    # Convert the DataFrame index to a pandas datetime index
-    df.index = pd.to_datetime(df.index)
+        df = pd.merge(df, df_i, left_index=True, right_index=True, how='outer')
+
 
     # Display the resulting time series DataFrame
     return df

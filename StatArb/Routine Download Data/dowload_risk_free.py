@@ -16,7 +16,7 @@ collection = client.Financial_Data.Risk_Free
 
 # https://markets.newyorkfed.org/static/docs/markets-api.html#/Reference%20Rates
 
-start_date ='2023-05-16'
+start_date ='2023-06-17'
 end_date = datetime.today().strftime("%Y-%m-%d")
 
 # Retrieve all days

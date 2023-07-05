@@ -196,10 +196,10 @@ except Exception:
 collection_equity = client.Financial_Data.Daily_Timeseries
 
 # Retrieve all days
-# days = list(collection_Daily_Timeseries.distinct("timestamp"))
+days = list(collection_equity.distinct("timestamp"))
+print(days[-1])
 
-
-update_existing_symbol_Daily_Timeseries(start_date='2023-05-16',
+update_existing_symbol_Daily_Timeseries(start_date='2023-06-23',
                                         end_date=datetime.today().strftime("%Y-%m-%d"),
                                         collection=collection_equity)
 
@@ -211,9 +211,10 @@ update_existing_symbol_Daily_Timeseries(start_date='2023-05-16',
 collection_BM = client.Financial_Data.Indices
 
 # Retrieve all days
-# days = list(collection_BM.distinct("timestamp"))
+days = list(collection_BM.distinct("timestamp"))
+print(days[-1])
 
-update_existing_symbol_Indices(start_date='2023-05-16',
+update_existing_symbol_Indices(start_date='2023-06-17',
                                end_date=datetime.today().strftime("%Y-%m-%d"),
                                collection=collection_BM,
                                indices=['^IXIC', '^SPX'])
