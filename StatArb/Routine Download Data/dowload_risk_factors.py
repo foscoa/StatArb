@@ -51,20 +51,22 @@ factors_data.reverse()
 mom_data = factor_m[factor_m.index(['', 'WML'])+1:]
 
 for i in factors_data:
-    curr_data = datetime.strptime(i[0].replace(' ',''), '%Y%m%d').isoformat()
+    curr_date = datetime.strptime(i[0].replace(' ',''), '%Y%m%d').isoformat()
 
-    temp_dict = {}
-    temp_dict['Date'] = curr_data
-    counter = 1
-    for j in factors_names:
-        temp_dict[j] = float(i[counter].replace(' ',''))
-        counter += 1
-    #integrate mom
-    bools = [k[0].replace(' ', '') == i[0].replace(' ', '') for k in mom_data]
-    if sum(bools) > 0:
-        pos = [index for index, value in enumerate(bools) if value][0]
-        temp_dict['WML'] = float(mom_data[pos][1].replace(' ',''))
-    else:
-        temp_dict['WML'] = 'nan'
+    if len(list(collection.find({'timestamp': curr_date}))) == 0: # check if date already exists
 
-    print(i)
+        temp_dict = {}
+        temp_dict['timestamp'] = curr_date
+        counter = 1
+        for j in factors_names:
+            temp_dict[j] = float(i[counter].replace(' ',''))
+            counter += 1
+        #integrate mom
+        bools = [k[0].replace(' ', '') == i[0].replace(' ', '') for k in mom_data]
+        if sum(bools) > 0:
+            pos = [index for index, value in enumerate(bools) if value][0]
+            temp_dict['WML'] = float(mom_data[pos][1].replace(' ',''))
+        else:
+            temp_dict['WML'] = 'nan'
+
+        collection.insert_one(temp_dict)

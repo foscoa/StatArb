@@ -6,6 +6,7 @@ import pymongo
 from StatArb.utils.query_mongoDB_functions import *
 from StatArb.utils.routine_functions import *
 import time
+import statsmodels.api as sm
 
 
 class PairsTradingStrategy:
@@ -30,39 +31,88 @@ class PairsTradingStrategy:
         except Exception:
             print("Error: " + Exception)
 
-        collection = client.Financial_Data.Daily_Timeseries
-        IN_sample_start_date = '2002-01-15'
+        collection_equity = client.Financial_Data.Daily_Timeseries
+        collection_FCT = client.Financial_Data.Risk_Factors
+
+        IN_sample_start_date = '2023-01-15'
         IN_sample_end_date = '2023-06-23'
-        date = IN_sample_end_date
 
-        stock_tickers_universe = queryGetTickers(collection, date)
+        # stock_tickers_universe = queryGetTickers(collection, date)
+        stock_tickers_universe = ['CVX', 'STZ']
 
-        my_time = ['2023-05-23', # 1 month
-                '2023-02-23', # 3 months
-                '2022-11-23', # 6 months
-                '2022-05-23', # 1 year
-                '2020-05-22', # 3 year
-                '2018-05-22', # 5 year
-                '2013-05-22', # 10 year
-                '2008-05-22', # 15 years
-                '2003-05-22', # 20 years
-                ]
+        stocks_time_series = queryTimeSeriesEquity(symbols=stock_tickers_universe,
+                                                   start=IN_sample_start_date,
+                                                   end=IN_sample_end_date,
+                                                   param='Adj Close',
+                                                   collection=collection_equity)
 
-        stocks = [1,2,4,8,16,32,64,128, 256, 512, 1024, 2048, 3000]
+        factors_TS = queryTimeSeriesFactors(start=IN_sample_start_date,
+                                            end=IN_sample_end_date,
+                                            collection=collection_FCT)
+        factors_TS /= 100
+        factors_TS.drop('RF', axis=1, inplace=True)
 
-        times = pd.DataFrame(0, index=time, columns=stocks)
+        stocks_returns = calculate_log_returns(stocks_time_series)
 
-        start_time = time.time()
+        # Merge the two time series
+        merged_ts = pd.merge(stocks_returns['CVX'], factors_TS, how='outer', left_index=True, right_index=True)
+        merged_ts = pd.DataFrame(merged_ts.loc[merged_ts.CVX.dropna().index])
 
-        stocks_time_series = queryTimeSeriesEquity(symbols      = stock_tickers_universe[0:stocks[3]],
-                                                   start        = my_time[4],
-                                                   end          = IN_sample_end_date,
-                                                   param        = 'Adj Close',
-                                                   collection   = collection)
-        end_time = time.time()
-        execution_time = end_time - start_time
+        # Separate the independent variables (X) and the dependent variable (Y)
+        X = pd.DataFrame(merged_ts[['Mkt-RF', 'SMB', 'HML', 'WML']])
+        Y = pd.DataFrame(merged_ts['CVX'])
 
-        print("Execution time:", execution_time, "seconds")
+        # Add a constant column to X for the intercept term
+        X = sm.add_constant(X)
+
+        # Fit the multiple linear regression model
+        model = sm.OLS(Y, X).fit()
+
+        # Print the model summary
+        print(model.summary())
+
+
+
+        def test_performance_query():
+            try:
+                client = pymongo.MongoClient()
+            except Exception:
+                print("Error: " + Exception)
+
+            collection = client.Financial_Data.Daily_Timeseries
+            IN_sample_start_date = '2002-01-15'
+            IN_sample_end_date = '2023-06-23'
+            date = IN_sample_end_date
+
+            stock_tickers_universe = queryGetTickers(collection, date)
+
+            my_time = ['2023-05-23', # 1 month
+                    '2023-02-23', # 3 months
+                    '2022-11-23', # 6 months
+                    '2022-05-23', # 1 year
+                    '2020-05-22', # 3 year
+                    '2018-05-22', # 5 year
+                    '2013-05-22', # 10 year
+                    '2008-05-22', # 15 years
+                    '2003-05-22', # 20 years
+                    ]
+
+            stocks = [1,2,4,8,16,32,64,128, 256, 512, 1024, 2048, 3000]
+
+            times = pd.DataFrame(0, index=time, columns=stocks)
+
+            start_time = time.time()
+
+            stocks_time_series = queryTimeSeriesEquity(symbols      = stock_tickers_universe[0:stocks[3]],
+                                                       start        = my_time[4],
+                                                       end          = IN_sample_end_date,
+                                                       param        = 'Adj Close',
+                                                       collection   = collection)
+            end_time = time.time()
+            execution_time = end_time - start_time
+
+            print("Execution time:", execution_time, "seconds")
+
 
 
     def execute_trades(self, signals):

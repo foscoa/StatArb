@@ -98,6 +98,45 @@ def queryTimeSeriesRates(start, end, collection):
     # Display the resulting time series DataFrame
     return df
 
+def queryTimeSeriesFactors(start, end, collection):
+    # Convert to ISO 8601 format
+    iso_start = datetime.strptime(start, '%Y-%m-%d').isoformat()
+    iso_end = datetime.strptime(end, '%Y-%m-%d').isoformat()
+
+    # Define the aggregation pipeline
+    pipeline = [
+        {'$match': {"timestamp": {"$gte": iso_start,
+                                  "$lt": iso_end}
+                    }
+         },
+        {'$project': {'_id': 0, 'timestamp':1, 'Mkt-RF':1, 'SMB':1, 'HML':1, 'RF':1, 'WML':1}}
+    ]
+
+    json_data = list(collection.aggregate(pipeline))
+
+    # Initialize empty lists to store the parsed data
+    timestamps = []
+    factors_data = []
+
+    # Iterate over the JSON data and extract the required values
+    for item in json_data:
+        timestamp = pd.Timestamp(item['timestamp']).to_datetime64()
+        timestamps.append(timestamp)
+        factors_data.append(list(item.values())[1:])
+
+    # Create the pandas DataFrame
+    df = pd.DataFrame(factors_data, index=timestamps)
+    df.columns = list(item.keys())[1:]
+    # Sort the DataFrame by the index (timestamps)
+    df.sort_index(inplace=True)
+
+    # Convert the DataFrame index to a pandas datetime index
+    df.index = pd.to_datetime(df.index)
+
+    # Display the resulting time series DataFrame
+    return df
+
+
 def queryGetTickers(collection, date):
     # gets all the tickers in Daily_Timeseries at a given date
 

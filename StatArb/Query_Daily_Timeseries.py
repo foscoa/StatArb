@@ -27,6 +27,7 @@ except Exception:
 collection_equity = client.Financial_Data.Daily_Timeseries
 collection_rates = client.Financial_Data.Risk_Free
 collection_BM = client.Financial_Data.Indices
+collection_FCT = client.Financial_Data.Risk_Factors
 
 
 # Specify the symbols you want to retrieve the time series for
@@ -46,6 +47,10 @@ price_TS = queryTimeSeriesEquity(symbols      = symbols,
 rates_TS = queryTimeSeriesRates(start         = start,
                                    end           = end,
                                    collection    = collection_rates)
+
+factors_TS = queryTimeSeriesFactors(start         = start,
+                                   end           = end,
+                                   collection    = collection_FCT)
 
 price_BM = queryTimeSeriesEquity(symbols      = benchmark,
                                     start        = start,
