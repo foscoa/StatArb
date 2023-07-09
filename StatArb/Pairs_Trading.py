@@ -9,6 +9,7 @@ import time
 import statsmodels.api as sm
 
 
+
 class PairsTradingStrategy:
     def __init__(self):
         # Initialize collection MongoDB database
@@ -26,6 +27,7 @@ class PairsTradingStrategy:
         # Perform data analysis and generate trading signals
         # This method should take historical data as input and return trading signals
 
+        # conntect to database
         try:
             client = pymongo.MongoClient()
         except Exception:
@@ -34,84 +36,62 @@ class PairsTradingStrategy:
         collection_equity = client.Financial_Data.Daily_Timeseries
         collection_FCT = client.Financial_Data.Risk_Factors
 
-        IN_sample_start_date = '2023-01-15'
-        IN_sample_end_date = '2023-06-23'
+        print("Last day in equity time series is " + str(list(collection_equity.distinct("timestamp"))[-1]))
+        print("Last day in factors time series is " + str(list(collection_FCT.distinct("timestamp"))[-1]))
 
-        # stock_tickers_universe = queryGetTickers(collection, date)
-        stock_tickers_universe = ['CVX', 'STZ']
+        print("First day in equity time series is " + str(list(collection_equity.distinct("timestamp"))[0]))
+        print("First day in factors time series is " + str(list(collection_FCT.distinct("timestamp"))[0]))
 
-        stocks_time_series = queryTimeSeriesEquity(symbols=stock_tickers_universe,
-                                                   start=IN_sample_start_date,
-                                                   end=IN_sample_end_date,
-                                                   param='Adj Close',
-                                                   collection=collection_equity)
+        IN_sample_start_date = '2015-06-23'
+        IN_sample_end_date = '2015-12-23'
 
+        # generate factors time series
         factors_TS = queryTimeSeriesFactors(start=IN_sample_start_date,
                                             end=IN_sample_end_date,
                                             collection=collection_FCT)
         factors_TS /= 100
         factors_TS.drop('RF', axis=1, inplace=True)
 
-        stocks_returns = calculate_log_returns(stocks_time_series)
-
-        # Merge the two time series
-        merged_ts = pd.merge(stocks_returns['CVX'], factors_TS, how='outer', left_index=True, right_index=True)
-        merged_ts = pd.DataFrame(merged_ts.loc[merged_ts.CVX.dropna().index])
-
-        # Separate the independent variables (X) and the dependent variable (Y)
-        X = pd.DataFrame(merged_ts[['Mkt-RF', 'SMB', 'HML', 'WML']])
-        Y = pd.DataFrame(merged_ts['CVX'])
-
-        # Add a constant column to X for the intercept term
-        X = sm.add_constant(X)
-
-        # Fit the multiple linear regression model
-        model = sm.OLS(Y, X).fit()
-
-        # Print the model summary
-        print(model.summary())
+        X_factor_exposures = pd.DataFrame(index=['const', 'Mkt-RF', 'SMB', 'HML', 'WML'])
 
 
+        stock_tickers_universe = queryGetTickers(collection_equity, IN_sample_end_date)
 
-        def test_performance_query():
-            try:
-                client = pymongo.MongoClient()
-            except Exception:
-                print("Error: " + Exception)
+        for symbol in stock_tickers_universe:
 
-            collection = client.Financial_Data.Daily_Timeseries
-            IN_sample_start_date = '2002-01-15'
-            IN_sample_end_date = '2023-06-23'
-            date = IN_sample_end_date
+            stocks_time_series = queryTimeSeriesEquity(symbols=[symbol],
+                                                       start=IN_sample_start_date,
+                                                       end=IN_sample_end_date,
+                                                       param='Adj Close',
+                                                       collection=collection_equity)
 
-            stock_tickers_universe = queryGetTickers(collection, date)
+            # Calculate stocks returns
+            stocks_returns = calculate_log_returns(stocks_time_series)
 
-            my_time = ['2023-05-23', # 1 month
-                    '2023-02-23', # 3 months
-                    '2022-11-23', # 6 months
-                    '2022-05-23', # 1 year
-                    '2020-05-22', # 3 year
-                    '2018-05-22', # 5 year
-                    '2013-05-22', # 10 year
-                    '2008-05-22', # 15 years
-                    '2003-05-22', # 20 years
-                    ]
+            # Merge the two time series
+            merged_ts = pd.merge(stocks_returns, factors_TS, how='outer', left_index=True, right_index=True)
+            merged_ts = pd.DataFrame(merged_ts.loc[merged_ts[symbol].dropna().index])
 
-            stocks = [1,2,4,8,16,32,64,128, 256, 512, 1024, 2048, 3000]
+            # Separate the independent variables (X) and the dependent variable (Y)
+            X = pd.DataFrame(merged_ts[['Mkt-RF', 'SMB', 'HML', 'WML']])
+            Y = pd.DataFrame(merged_ts[symbol])
 
-            times = pd.DataFrame(0, index=time, columns=stocks)
+            # Add a constant column to X for the intercept term
+            X = sm.add_constant(X)
 
-            start_time = time.time()
+            # Fit the multiple linear regression model
+            model = sm.OLS(Y, X).fit()
 
-            stocks_time_series = queryTimeSeriesEquity(symbols      = stock_tickers_universe[0:stocks[3]],
-                                                       start        = my_time[4],
-                                                       end          = IN_sample_end_date,
-                                                       param        = 'Adj Close',
-                                                       collection   = collection)
-            end_time = time.time()
-            execution_time = end_time - start_time
+            # New column data
+            new_column = pd.Series(model.params, name=symbol)
 
-            print("Execution time:", execution_time, "seconds")
+            # Concatenate the new column with the original DataFrame
+            X_factor_exposures = pd.concat([X_factor_exposures, new_column], axis=1)
+
+            # Print the model summary
+            print(str(round(stock_tickers_universe.index(symbol)/len(stock_tickers_universe)*100,2)) + '%')
+
+
 
 
 

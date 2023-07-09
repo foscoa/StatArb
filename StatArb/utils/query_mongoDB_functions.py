@@ -1,6 +1,7 @@
 from datetime import datetime
 import pandas as pd
 import numpy as np
+import pymongo
 
 def queryTimeSeriesEquity(symbols, start, end, param, collection):
     # Convert to ISO 8601 format
@@ -136,7 +137,6 @@ def queryTimeSeriesFactors(start, end, collection):
     # Display the resulting time series DataFrame
     return df
 
-
 def queryGetTickers(collection, date):
     # gets all the tickers in Daily_Timeseries at a given date
 
@@ -144,3 +144,51 @@ def queryGetTickers(collection, date):
     iso_date = datetime.strptime(date, '%Y-%m-%d').isoformat()
 
     return list(collection.distinct(key='Data.Symbol', filter={"timestamp": iso_date}))
+
+def test_performance_query():
+    try:
+        client = pymongo.MongoClient()
+    except Exception:
+        print("Error: " + Exception)
+
+    collection = client.Financial_Data.Daily_Timeseries
+    IN_sample_start_date = '2002-01-15'
+    IN_sample_end_date = '2023-06-23'
+    date = IN_sample_end_date
+
+    stock_tickers_universe = queryGetTickers(collection, date)
+
+    my_time = ['2023-05-23',  # 1 month
+               '2023-02-23',  # 3 months
+               '2022-11-23',  # 6 months
+               '2022-05-23',  # 1 year
+               '2020-05-22',  # 3 year
+               '2018-05-22',  # 5 year
+               '2013-05-22',  # 10 year
+               '2008-05-22',  # 15 years
+               '2003-05-22',  # 20 years
+               ]
+
+    stocks = [1, 2, 4, 8, 16, 32, 64]
+
+    times = pd.DataFrame(0, index=my_time, columns=stocks)
+
+    for i in stocks:
+        for k in my_time:
+            start_time = time.time()
+
+            stocks_time_series = queryTimeSeriesEquity(symbols=stock_tickers_universe[0:2],
+                                                       start=my_time[-1],
+                                                       end=IN_sample_end_date,
+                                                       param='Adj Close',
+                                                       collection=collection)
+
+            end_time = time.time()
+            execution_time = end_time - start_time
+
+            minutes = int(execution_time / 60)  # Integer division to get the number of minutes
+            remaining_seconds = int(round(execution_time % 60, 0))  # Modulus operation to get the remaining seconds
+
+            exec_time = str(minutes) + "mim" + str(remaining_seconds) + 'sec'
+
+            print("Execution time for " + str(i) + "stocks and " + k + " : " + exec_time)
