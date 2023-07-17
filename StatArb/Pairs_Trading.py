@@ -126,6 +126,9 @@ class PairsTradingStrategy:
                                                index=['STK1', 'STK2', 'corr', 'abs corr']).transpose()]
                                   )
 
+        corr_list.sort_values(by='abs corr', inplace=True, ascending=False)
+
+
 
     def execute_trades(self, signals):
         # Execute trades based on the generated trading signals
