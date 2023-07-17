@@ -57,7 +57,9 @@ class PairsTradingStrategy:
 
         stock_tickers_universe = queryGetTickers(collection_equity, IN_sample_end_date)
 
-        for symbol in stock_tickers_universe:
+        start = time.ctime()
+
+        for symbol in stock_tickers_universe[2868:]:
 
             stocks_time_series = queryTimeSeriesEquity(symbols=[symbol],
                                                        start=IN_sample_start_date,
@@ -65,34 +67,64 @@ class PairsTradingStrategy:
                                                        param='Adj Close',
                                                        collection=collection_equity)
 
-            # Calculate stocks returns
-            stocks_returns = calculate_log_returns(stocks_time_series)
+            if len(stocks_time_series) < 31:
+                print(symbol + " has been excluded because historical data less that 30 days")
+            else:
+                # Calculate stocks returns
+                stocks_returns = calculate_log_returns(stocks_time_series)
 
-            # Merge the two time series
-            merged_ts = pd.merge(stocks_returns, factors_TS, how='outer', left_index=True, right_index=True)
-            merged_ts = pd.DataFrame(merged_ts.loc[merged_ts[symbol].dropna().index])
+                if stocks_returns.isna().sum().values[0] > 0:
+                    print(symbol + " has at least one NaN")
 
-            # Separate the independent variables (X) and the dependent variable (Y)
-            X = pd.DataFrame(merged_ts[['Mkt-RF', 'SMB', 'HML', 'WML']])
-            Y = pd.DataFrame(merged_ts[symbol])
+                else:
+                    # Merge the two time series
+                    merged_ts = pd.merge(stocks_returns, factors_TS, how='outer', left_index=True, right_index=True)
+                    merged_ts = pd.DataFrame(merged_ts.loc[merged_ts[symbol].dropna().index])
 
-            # Add a constant column to X for the intercept term
-            X = sm.add_constant(X)
+                    # Separate the independent variables (X) and the dependent variable (Y)
+                    X = pd.DataFrame(merged_ts[['Mkt-RF', 'SMB', 'HML', 'WML']])
+                    Y = pd.DataFrame(merged_ts[symbol])
 
-            # Fit the multiple linear regression model
-            model = sm.OLS(Y, X).fit()
+                    # Add a constant column to X for the intercept term
+                    X = sm.add_constant(X)
 
-            # New column data
-            new_column = pd.Series(model.params, name=symbol)
+                    # Fit the multiple linear regression model
+                    model = sm.OLS(Y, X).fit()
 
-            # Concatenate the new column with the original DataFrame
-            X_factor_exposures = pd.concat([X_factor_exposures, new_column], axis=1)
+                    # New column data
+                    new_column = pd.Series(model.params, name=symbol)
 
-            # Print the model summary
-            print(str(round(stock_tickers_universe.index(symbol)/len(stock_tickers_universe)*100,2)) + '%')
+                    # Concatenate the new column with the original DataFrame
+                    X_factor_exposures = pd.concat([X_factor_exposures, new_column], axis=1)
+
+                    # Print the model summary
+                    print(str(round(stock_tickers_universe.index(symbol)/len(stock_tickers_universe)*100,2)) + '%')
+
+        end = time.ctime()
+
+        F = X.drop('const', axis = 1).cov()
+        xF = X_factor_exposures.drop('const', axis=0)
+
+        cov_matrix = xF.transpose() @ F @ xF
+
+        # Calculate the correlation matrix using pandas
+        corr_matrix = cov_matrix.corr()
+
+        # Create list with most correlated assets
+        corr_list = pd.DataFrame(columns=['STK1', 'STK2', 'corr', 'abs corr'])
 
 
+        for i in range(0, int(len(corr_matrix)-2)):
 
+            temp_corr = corr_matrix.iloc[i, i + 1:]
+
+            corr_list = pd.concat([corr_list,
+                                  pd.DataFrame(data = [[temp_corr.name]*len(temp_corr),
+                                                       temp_corr.index,
+                                                       temp_corr.values,
+                                                       abs(temp_corr.values)],
+                                               index=['STK1', 'STK2', 'corr', 'abs corr']).transpose()]
+                                  )
 
 
     def execute_trades(self, signals):
