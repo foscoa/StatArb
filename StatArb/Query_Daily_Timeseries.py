@@ -23,78 +23,87 @@ try:
 except Exception:
     print("Error: " + Exception)
 
-# select the collection
-collection_equity = client.Financial_Data.Daily_Timeseries
-collection_rates = client.Financial_Data.Risk_Free
-collection_BM = client.Financial_Data.Indices
-collection_FCT = client.Financial_Data.Risk_Factors
+
+use_mongoDB = False
+
+if use_mongoDB == True:
+
+    # select the collection
+    collection_equity = client.Financial_Data.Daily_Timeseries
+    collection_rates = client.Financial_Data.Risk_Free
+    collection_BM = client.Financial_Data.Indices
+    collection_FCT = client.Financial_Data.Risk_Factors
+
+    # Specify the symbols you want to retrieve the time series for
+    symbols = ['CVX', 'STZ']
+    benchmark = ['^SPX']
+    start = '2015-01-02'
+    end = '2023-01-16'
+    print("Last day in time series is " + str(list(collection_equity.distinct("timestamp"))[-1]))
+    param = 'Adj Close'
+
+    price_TS = queryTimeSeriesEquity(symbols      = symbols,
+                                     start        = start,
+                                     end          = end,
+                                     param        = param,
+                                     collection   = collection_equity)
+
+    rates_TS = queryTimeSeriesRates(start         = start,
+                                    end           = end,
+                                    collection    = collection_rates)
+
+    factors_TS = queryTimeSeriesFactors(start         = start,
+                                        end           = end,
+                                        collection    = collection_FCT)
+
+    price_BM = queryTimeSeriesEquity(symbols      = benchmark,
+                                     start        = start,
+                                     end          = end,
+                                     param        = param,
+                                     collection   = collection_BM)
+
+    # Merge the two DataFrames based on a common time index
+    EFFR_TS = pd.DataFrame(pd.merge(price_TS , rates_TS, left_index=True, right_index=True, how='left')['EFFR'])
+    # Interpolate the missing values
+    EFFR_TS = EFFR_TS.interpolate()
+    # Smooth the values using a simple moving average
+    # window_size = 10
+    # EFFR_smoothed = EFFR_TS.rolling(window_size).mean()
+    # EFFR_smoothed['EFFR'][0:(window_size-1)] = EFFR_TS['EFFR'][0:(window_size-1)]
+    EFFR_TS = EFFR_TS/(100*252)
 
 
-# Specify the symbols you want to retrieve the time series for
-symbols = ['CVX', 'STZ']
-benchmark = ['^SPX']
-start = '2015-01-02'
-end = '2023-01-16'
-print("Last day in time series is " + str(list(collection_equity.distinct("timestamp"))[-1]))
-param = 'Adj Close'
+    # Merge the two DataFrames based on a common time index
+    BM_TS = pd.DataFrame(pd.merge(price_TS, price_BM, left_index=True, right_index=True, how='left')['^SPX'])
+    # Interpolate the missing values
+    BM_TS = BM_TS.interpolate()
 
-price_TS = queryTimeSeriesEquity(symbols      = symbols,
-                                    start        = start,
-                                    end          = end,
-                                    param        = param,
-                                    collection   = collection_equity)
+else:
+    dir_data = "C:\\Users\\Fosco\\Desktop\\Sample data\\"
+    price_TS = pd.read_csv(dir_data + "stock_prices.csv", parse_dates=['Date'], index_col='Date')
+    rates_TS = pd.read_csv(dir_data + "rates.csv", parse_dates=['Date'], index_col='Date')
+    BM_TS = pd.read_csv(dir_data+ "BM.csv", parse_dates=['Date'], index_col='Date')
 
-rates_TS = queryTimeSeriesRates(start         = start,
-                                   end           = end,
-                                   collection    = collection_rates)
-
-factors_TS = queryTimeSeriesFactors(start         = start,
-                                   end           = end,
-                                   collection    = collection_FCT)
-
-price_BM = queryTimeSeriesEquity(symbols      = benchmark,
-                                    start        = start,
-                                    end          = end,
-                                    param        = param,
-                                    collection   = collection_BM)
-
-# Merge the two DataFrames based on a common time index
-EFFR_TS = pd.DataFrame(pd.merge(price_TS , rates_TS, left_index=True, right_index=True, how='left')['EFFR'])
-# Interpolate the missing values
-EFFR_TS = EFFR_TS.interpolate()
-# Smooth the values using a simple moving average
-# window_size = 10
-# EFFR_smoothed = EFFR_TS.rolling(window_size).mean()
-# EFFR_smoothed['EFFR'][0:(window_size-1)] = EFFR_TS['EFFR'][0:(window_size-1)]
-EFFR_TS = EFFR_TS/(100*252)
-
-
-# Merge the two DataFrames based on a common time index
-BM_TS = pd.DataFrame(pd.merge(price_TS, price_BM, left_index=True, right_index=True, how='left')['^SPX'])
-# Interpolate the missing values
-BM_TS = BM_TS.interpolate()
+    price_TS.drop('VATE', inplace=True, axis=1) # VATE has negative prices
+    rates_TS = rates_TS / (252 * 100)
 
 # signal, long CVX short STZ
 signal = price_TS*0
-signal[symbols[0]] += 0.5
-signal[symbols[1]] += 1
 
 def generateRandomSignal(signal):
-    # Set the random seed for reproducibility (optional)
-    random_signal = signal
 
-    for i in signal.columns:
+    # Generate random values of -1, 0, and 1
+    random_values = np.random.choice([-0.01, 0, 0.01], size=(signal.shape[0]-1, signal.shape[1]))
 
-        # Define the dimensions of the DataFrame
-        num_rows = signal.shape[0]
-        num_cols = 1
-
-        # Generate a random DataFrame
-        random_signal[i] = 2*np.random.rand(num_rows, num_cols)-1
+    # Create a DataFrame
+    random_signal = pd.DataFrame(random_values, columns=signal.columns)
+    random_signal.index = signal.index[1:]
 
     return random_signal
-# signal = generateRandomSignal(signal)
 
+signal = generateRandomSignal(signal)
+# signal[symbols[0]] += 0.5
+# signal[symbols[1]] += 1
 
 class BacktestTradingStrategy:
     def __init__(self,
@@ -121,7 +130,10 @@ class BacktestTradingStrategy:
 
     def portfolio_cumulative_log_returns(self):
 
-        PT_cum_ret = (self.portfolio_log_returns()+1).cumprod()
+        PT_log_returns = self.signal * calculate_log_returns(self.asset_prices)
+        PT_log_returns.fillna(0, inplace=True)
+        PT_log_returns = pd.DataFrame(data=PT_log_returns.sum(axis=1), columns=['Portfolio'])
+        PT_cum_ret = (PT_log_returns+1).cumprod()
 
         return PT_cum_ret
 
@@ -199,7 +211,10 @@ class BacktestTradingStrategy:
         summary_stat = {}
 
         PT_log_returns = self.portfolio_log_returns()
-        PT_excess_returns = pd.DataFrame(PT_log_returns['Portfolio'] - EFFR_TS['EFFR'])
+
+        # TODO: reintroduce subtraction risk-free rate
+        # PT_excess_returns = pd.DataFrame(PT_log_returns['Portfolio'] - self.risk_free['EFFR'])
+        PT_excess_returns = PT_log_returns
 
         summary_stat["ann. mean"] = float(PT_log_returns.mean().values) * 252
         summary_stat["ann. std"] = float(PT_log_returns.std().values) * np.sqrt(252)
@@ -212,9 +227,13 @@ class BacktestTradingStrategy:
 
     def generate_report(self):
 
+        # benchmark returns
         BM_log_returns = calculate_log_returns(self.benchmark)
         BM_log_returns.fillna(0, inplace=True)
         BM_cum_log_returns = pd.DataFrame(data=BM_log_returns.sum(axis=1) + 1, columns=['Bemchmark']).cumprod()
+
+        # portfolio returns
+        PT_returns = self.portfolio_cumulative_log_returns()
 
         fig = make_subplots(rows=2,
                             cols=1,
@@ -225,8 +244,8 @@ class BacktestTradingStrategy:
 
         fig.add_trace(
             go.Scatter(
-                x=self.portfolio_cumulative_log_returns().index.to_list(),
-                y=self.portfolio_cumulative_log_returns()['Portfolio'].to_list(),
+                x=PT_returns.index.to_list(),
+                y=PT_returns['Portfolio'].to_list(),
                 line_color='cadetblue'
             ),
             row=1,
@@ -330,7 +349,7 @@ class BacktestTradingStrategy:
 # Create an instance of the TradingStrategy class
 strategy = BacktestTradingStrategy(
     name="Long/Short CVX STZ",
-    description="Invest in high-performing assets over a certain period",
+    description="Invest in high-performing assets over a certain period of time",
     asset_prices=price_TS,
     benchmark=BM_TS,
     signal=signal

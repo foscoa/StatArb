@@ -129,6 +129,38 @@ class PairsTradingStrategy:
         corr_list.sort_values(by='abs corr', inplace=True, ascending=False)
 
 
+        pairs = pd.read_csv('C:\\Users\\Fosco\\Desktop\\pairs_correlation_2015-06-23_2015-12-23.csv', index_col=0)
+
+        date = datetime.strptime("2001-01-02", '%Y-%m-%d').isoformat()
+
+        # Define the aggregation pipeline
+        pipeline = [
+            {'$match': {"timestamp": date, "Data.Symbol":"CVX"}}
+        ]
+
+        # Define the aggregation pipeline
+        pipeline2 = [
+            {"timestamp": date, "Data.Symbol":"CVX"},
+            {'$push': {"$Data":{"WML":1}}}
+        ]
+
+        collection_equity.update_one(pipeline2)
+
+        json_data = list(collection_equity.aggregate(pipeline))
+
+        # rewrite database
+        for id in list(collection_equity.distinct('_id')):
+            document = collection_equity.find_one({'_id': id})
+
+            new_document = dict()
+            new_document['_id'] = document['_id']
+            new_document['timestamp'] = document['timestamp']
+
+            for item in document['Data']:
+                symbol = item.pop('Symbol')
+                new_document[symbol] = item
+
+            collection_equity.replace_one({'_id': id}, new_document)
 
     def execute_trades(self, signals):
         # Execute trades based on the generated trading signals

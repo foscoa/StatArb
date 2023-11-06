@@ -220,7 +220,3 @@ update_existing_symbol_Indices(start_date='2023-06-17',
                                indices=['^IXIC', '^SPX'])
 
 
-
-
-
-
