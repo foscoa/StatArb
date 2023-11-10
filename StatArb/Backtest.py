@@ -79,7 +79,8 @@ if use_mongoDB == True:
     BM_TS = BM_TS.interpolate()
 
 else:
-    dir_data = "C:\\Users\\Fosco\\Desktop\\Sample data\\"
+    # dir_data = "C:\\Users\\Fosco\\Desktop\\Sample data\\"
+    dir_data = "/Users/foscoantognini/Documents/StatArb_input/"
     price_TS = pd.read_csv(dir_data + "stock_prices.csv", parse_dates=['Date'], index_col='Date')
     rates_TS = pd.read_csv(dir_data + "rates.csv", parse_dates=['Date'], index_col='Date')
     BM_TS = pd.read_csv(dir_data+ "BM.csv", parse_dates=['Date'], index_col='Date')
@@ -246,7 +247,8 @@ class BacktestTradingStrategy:
             go.Scatter(
                 x=PT_returns.index.to_list(),
                 y=PT_returns['Portfolio'].to_list(),
-                line_color='cadetblue'
+                line_color='cadetblue',
+                name='Strategy'
             ),
             row=1,
             col=1)
@@ -255,7 +257,8 @@ class BacktestTradingStrategy:
             go.Scatter(
                 x=BM_cum_log_returns.index.to_list(),
                 y=BM_cum_log_returns['Bemchmark'].to_list(),
-                line_color='tan'
+                line_color='tan',
+                name='S&P500'
             ),
             row=1,
             col=1)
@@ -266,6 +269,7 @@ class BacktestTradingStrategy:
                 y=self.drawdown_prc()['Portfolio'].to_list(),
                 fill='tozeroy',
                 line_color="darkred",
+                name='Drawdown'
             ),
             row=2,
             col=1)
@@ -285,8 +289,15 @@ class BacktestTradingStrategy:
 
                   " </sub>" +
 
-                  "<br>"
+                  "<br>",
 
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
         )
 
         return fig
@@ -348,7 +359,7 @@ class BacktestTradingStrategy:
 
 # Create an instance of the TradingStrategy class
 strategy = BacktestTradingStrategy(
-    name="Long/Short CVX STZ",
+    name="Random Strategy",
     description="Invest in high-performing assets over a certain period of time",
     asset_prices=price_TS,
     benchmark=BM_TS,
@@ -357,7 +368,6 @@ strategy = BacktestTradingStrategy(
 
 
 # develop
-
 
 app.layout = html.Div(
     children=[
