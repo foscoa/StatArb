@@ -77,6 +77,8 @@ if use_mongoDB == True:
     BM_TS = pd.DataFrame(pd.merge(price_TS, price_BM, left_index=True, right_index=True, how='left')['^SPX'])
     # Interpolate the missing values
     BM_TS = BM_TS.interpolate()
+    # Delete first element
+    BM_TS = BM_TS[1:]
 
 else:
     # dir_data = "C:\\Users\\Fosco\\Desktop\\Sample data\\"
@@ -86,7 +88,17 @@ else:
     BM_TS = pd.read_csv(dir_data+ "BM.csv", parse_dates=['Date'], index_col='Date')
 
     price_TS.drop('VATE', inplace=True, axis=1) # VATE has negative prices
-    rates_TS = rates_TS / (252 * 100)
+    # rates_TS = rates_TS / (252 * 100)
+
+    # Merge the two DataFrames based on a common time index
+    EFFR_TS = pd.DataFrame(pd.merge(price_TS , rates_TS, left_index=True, right_index=True, how='left')['EFFR'])
+    # Interpolate the missing values
+    EFFR_TS = EFFR_TS.interpolate()
+    # Smooth the values using a simple moving average
+    # window_size = 10
+    # EFFR_smoothed = EFFR_TS.rolling(window_size).mean()
+    # EFFR_smoothed['EFFR'][0:(window_size-1)] = EFFR_TS['EFFR'][0:(window_size-1)]
+    EFFR_TS = EFFR_TS/(100*252)
 
 # signal, long CVX short STZ
 signal = price_TS*0
@@ -108,18 +120,37 @@ signal = generateRandomSignal(signal)
 
 class BacktestTradingStrategy:
     def __init__(self,
-                 name           = "",
-                 description    = "",
-                 asset_prices   = np.nan,
+                 name: str,
+                 description: str,
+                 asset_prices,
                  risk_free      = np.nan,
                  benchmark      = np.nan,
                  signal         = np.nan):
+
+        # run validations to the received arguments
+        assert asset_prices[1:].index.equals(signal.index), "The input - asset_prices - (with the first " \
+                                                            "row deleted) and the input - signal - do not " \
+                                                            "have the same indices."
+
+        assert asset_prices.index.equals(risk_free.index), "The input - asset_prices - (with the first " \
+                                                            "row deleted) and the input - risk_free - do not " \
+                                                            "have the same indices."
+
+        assert asset_prices.index.equals(benchmark.index), "The input - asset_prices - (with the first " \
+                                                               "row deleted) and the input - benchmark - do not " \
+                                                               "have the same indices."
+
+
+
+        # assign to self object
         self.name = name
         self.description = description
         self.asset_prices = asset_prices
         self.risk_free = risk_free
         self.benchmark = benchmark
         self.signal = signal
+
+
 
     def portfolio_log_returns(self):
 
@@ -214,8 +245,8 @@ class BacktestTradingStrategy:
         PT_log_returns = self.portfolio_log_returns()
 
         # TODO: reintroduce subtraction risk-free rate
-        # PT_excess_returns = pd.DataFrame(PT_log_returns['Portfolio'] - self.risk_free['EFFR'])
-        PT_excess_returns = PT_log_returns
+        PT_excess_returns = pd.DataFrame(PT_log_returns['Portfolio'] - self.risk_free['EFFR'])
+        # PT_excess_returns = PT_log_returns
 
         summary_stat["ann. mean"] = float(PT_log_returns.mean().values) * 252
         summary_stat["ann. std"] = float(PT_log_returns.std().values) * np.sqrt(252)
@@ -362,6 +393,7 @@ strategy = BacktestTradingStrategy(
     name="Random Strategy",
     description="Invest in high-performing assets over a certain period of time",
     asset_prices=price_TS,
+    risk_free=EFFR_TS,
     benchmark=BM_TS,
     signal=signal
 )
