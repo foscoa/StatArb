@@ -1,6 +1,6 @@
 # Step 1 - Install and import pymongo
 import calendar
-from datetime import datetime
+from datetime import date
 
 import matplotlib
 import numpy as np
@@ -100,7 +100,7 @@ else:
     # EFFR_smoothed['EFFR'][0:(window_size-1)] = EFFR_TS['EFFR'][0:(window_size-1)]
     EFFR_TS = EFFR_TS/(100*252)
 
-# signal, long CVX short STZ
+# initialize signal dataframe
 signal = price_TS*0
 
 def generateRandomSignal(signal):
@@ -114,9 +114,17 @@ def generateRandomSignal(signal):
 
     return random_signal
 
-signal = generateRandomSignal(signal)
-# signal[symbols[0]] += 0.5
-# signal[symbols[1]] += 1
+# generate a random signal
+random_signal = True
+if random_signal == True:
+    signal = generateRandomSignal(signal)
+
+# generate a test signal that is long (50-50) the first two names
+test_signal = False
+if test_signal == True:
+    signal[signal.columns[0]] = signal[signal.columns[0]] + 0.5
+    signal[signal.columns[1]] = signal[signal.columns[1]] + 0.5
+    signal = signal[1:]
 
 class BacktestTradingStrategy:
     def __init__(self,
@@ -140,8 +148,6 @@ class BacktestTradingStrategy:
                                                                "row deleted) and the input - benchmark - do not " \
                                                                "have the same indices."
 
-
-
         # assign to self object
         self.name = name
         self.description = description
@@ -150,9 +156,7 @@ class BacktestTradingStrategy:
         self.benchmark = benchmark
         self.signal = signal
 
-
-
-    def portfolio_log_returns(self):
+    def strategy_log_returns(self):
 
         PT_log_returns = self.signal * calculate_log_returns(self.asset_prices)
         PT_log_returns.fillna(0, inplace=True)
@@ -160,7 +164,7 @@ class BacktestTradingStrategy:
 
         return PT_log_returns
 
-    def portfolio_cumulative_log_returns(self):
+    def strategy_cumulative_log_returns(self):
 
         PT_log_returns = self.signal * calculate_log_returns(self.asset_prices)
         PT_log_returns.fillna(0, inplace=True)
@@ -171,7 +175,7 @@ class BacktestTradingStrategy:
 
     def portfolio_monthly_returns(self):
         # development ground
-        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        PT_cum_ret = self.strategy_cumulative_log_returns()
         monthly_returns = {}
 
         for year in PT_cum_ret.index.year.unique():
@@ -183,9 +187,9 @@ class BacktestTradingStrategy:
 
         return monthly_returns
 
-    def portfolio_YTD_returns(self):
+    def strategy_YTD_returns(self):
         # development ground
-        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        PT_cum_ret = self.strategy_cumulative_log_returns()
         YTD_returns = {}
 
         for year in PT_cum_ret.index.year.unique():
@@ -196,9 +200,9 @@ class BacktestTradingStrategy:
 
         return YTD_returns
 
-    def portfolio_monthly_returns_table(self):
+    def strategy_monthly_returns_table(self):
         # develop
-        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        PT_cum_ret = self.strategy_cumulative_log_returns()
         monthy_returns_table = pd.DataFrame(data=[],
                                             columns=calendar.month_abbr[1:13] + ["YTD"],
                                             index=PT_cum_ret.index.year.unique()[::-1])
@@ -215,21 +219,21 @@ class BacktestTradingStrategy:
 
     def drawdown(self):
 
-        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        PT_cum_ret = self.strategy_cumulative_log_returns()
         DD = (PT_cum_ret - PT_cum_ret.cummax())
 
         return DD
 
     def drawdown_prc(self):
 
-        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        PT_cum_ret = self.strategy_cumulative_log_returns()
         DD = (PT_cum_ret/PT_cum_ret.cummax()) - 1
 
         return DD
 
     def cagr(self):
 
-        PT_cum_ret = self.portfolio_cumulative_log_returns()
+        PT_cum_ret = self.strategy_cumulative_log_returns()
 
         days = PT_cum_ret.index[-1] - PT_cum_ret.index[0]
         years = days.days/365
@@ -242,11 +246,9 @@ class BacktestTradingStrategy:
 
         summary_stat = {}
 
-        PT_log_returns = self.portfolio_log_returns()
+        PT_log_returns = self.strategy_log_returns()
 
-        # TODO: reintroduce subtraction risk-free rate
         PT_excess_returns = pd.DataFrame(PT_log_returns['Portfolio'] - self.risk_free['EFFR'])
-        # PT_excess_returns = PT_log_returns
 
         summary_stat["ann. mean"] = float(PT_log_returns.mean().values) * 252
         summary_stat["ann. std"] = float(PT_log_returns.std().values) * np.sqrt(252)
@@ -265,7 +267,7 @@ class BacktestTradingStrategy:
         BM_cum_log_returns = pd.DataFrame(data=BM_log_returns.sum(axis=1) + 1, columns=['Bemchmark']).cumprod()
 
         # portfolio returns
-        PT_returns = self.portfolio_cumulative_log_returns()
+        PT_returns = self.strategy_cumulative_log_returns()
 
         fig = make_subplots(rows=2,
                             cols=1,
@@ -335,7 +337,7 @@ class BacktestTradingStrategy:
 
     def generate_dash_monthly_returns_table(self):
 
-        my_df = self.portfolio_monthly_returns_table()
+        my_df = self.strategy_monthly_returns_table()
         my_df.insert(0, 'Year', my_df.index)
         percentage = FormatTemplate.percentage(2)
 
@@ -381,11 +383,30 @@ class BacktestTradingStrategy:
                                                 + ' && {' + j + '} !=0',
                                 'column_id': j},
                             'backgroundColor': str(master_palette[i])
-                        } for i in range(0, n_palette+1) for j in strategy.portfolio_monthly_returns_table().columns
+                        } for i in range(0, n_palette+1) for j in strategy.strategy_monthly_returns_table().columns
                     ]
 
 
                 )
+
+    def generate_dash_trades_table(self):
+
+        percentage = FormatTemplate.percentage(2)
+
+        trades = self.signal
+        trades.index = self.asset_prices[:-1].index
+        delta_trades = trades.diff(1)
+
+        # choose first change
+        today_action = pd.DataFrame(delta_trades.loc[delta_trades.index[1]])
+        today_action['Symbol'] = today_action.index
+        today_action.columns = ["Action" ,'Symbol'] # Rename columns
+        today_action = today_action[['Symbol', "Action"]] # Reorder columns
+
+        return dash_table.DataTable(
+            data=today_action.to_dict('records'),
+            columns=[{"name": "Symbol", "id": "Symbol"}] +
+                    [{"name": "Action", "id": "Action", 'type': 'numeric', 'format': percentage}])
 
 
 # Create an instance of the TradingStrategy class
@@ -401,8 +422,10 @@ strategy = BacktestTradingStrategy(
 
 # develop
 
-app.layout = html.Div(
-    children=[
+app.layout = html.Div([
+    dcc.Tabs([
+        dcc.Tab(label='Performance',
+                children=[
         html.Div(
             children=[
                 dcc.Graph(
@@ -421,8 +444,31 @@ app.layout = html.Div(
             style={'marginLeft': 80, 'marginRight': 120}
         ),
 
-    ]
-)
+    ]),
+        dcc.Tab(label='Trades',
+                children=[
+                    html.Div(
+                        children=[
+                            html.Br(),
+                            dcc.DatePickerSingle(
+                                id='my-date-picker-single',
+                                min_date_allowed=date(1995, 8, 5),
+                                max_date_allowed=date(2017, 9, 19),
+                                initial_visible_month=date(2017, 8, 5),
+                                date=date(2017, 8, 25)
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        children=[
+                            html.Br(),
+                            strategy.generate_dash_trades_table()
+                        ],
+                        style={'width': 300}
+                    )
+                ])
+    ])
+])
 
 if __name__ == '__main__':
     app.run_server(debug=False, port=5000)
