@@ -81,8 +81,8 @@ if use_mongoDB == True:
     BM_TS = BM_TS[1:]
 
 else:
-    dir_data = "C:\\Users\\Fosco\\Desktop\\Sample data\\"
-    # dir_data = "/Users/foscoantognini/Documents/StatArb_input/"
+    # dir_data = "C:\\Users\\Fosco\\Desktop\\Sample data\\"
+    dir_data = "/Users/foscoantognini/Documents/StatArb_input/"
     price_TS = pd.read_csv(dir_data + "stock_prices.csv", parse_dates=['Date'], index_col='Date')
     rates_TS = pd.read_csv(dir_data + "rates.csv", parse_dates=['Date'], index_col='Date')
     BM_TS = pd.read_csv(dir_data+ "BM.csv", parse_dates=['Date'], index_col='Date')
@@ -403,7 +403,7 @@ class BacktestTradingStrategy:
         # choose first change
         today_action = pd.DataFrame(delta_trades.loc[delta_trades.index[1]])
         today_action = today_action.reset_index()
-        today_action.columns = ["Symbol", 'Action']  # Rename columns
+        today_action.columns = ["Symbol", 'Position Change']  # Rename columns
 
         # choose first contribution
         today_contr = pd.DataFrame(contribution_bps.loc[contribution_bps.index[0]])
@@ -425,10 +425,10 @@ class BacktestTradingStrategy:
         return dash_table.DataTable(
             data=data.to_dict('records'),
             columns=[{"name": "Symbol", "id": "Symbol"}] +
-                    [{"name": "Action", "id": "Action", 'type': 'numeric', 'format': percentage}] +
+                    [{"name": 'Position Change', "id": 'Position Change', 'type': 'numeric', 'format': percentage}] +
                     [{"name": "Contribution (bps)", "id": "Contribution (bps)"}],
             sort_action='native',
-            page_size=20
+            style_table={'height': '110vh', 'overflowY': 'auto'}
         )
 
     def generate_contribution_h_barchart(self):
@@ -446,6 +446,10 @@ class BacktestTradingStrategy:
                 orientation='h',
                 marker_color=df['is_positive'])
         )
+        fig.update_layout(
+            title='P&L single name contribution'
+        )
+
 
         return fig
 
@@ -505,17 +509,17 @@ app.layout = html.Div([
                             html.Div(
                                 strategy.generate_dash_trades_table(),
                                 style={"display": "inline-block",
-                                       'width':'20%'}
+                                       'width':'30%'}
                             ),
 
                             html.Div(
                                     dcc.Graph(
                                         id='h_bar_cart-graph',
                                         figure=strategy.generate_contribution_h_barchart(),
-                                        style={'height': '100%'}
+                                        style={'height': '120vh'}
                                     ),
                                 style={"display": "inline-block",
-                                       'width':'80%'}
+                                       'width':'70%'}
                             ),
                         ],
 
