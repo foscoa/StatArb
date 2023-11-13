@@ -81,8 +81,8 @@ if use_mongoDB == True:
     BM_TS = BM_TS[1:]
 
 else:
-    # dir_data = "C:\\Users\\Fosco\\Desktop\\Sample data\\"
-    dir_data = "/Users/foscoantognini/Documents/StatArb_input/"
+    dir_data = "C:\\Users\\Fosco\\Desktop\\Sample data\\"
+    # dir_data = "/Users/foscoantognini/Documents/StatArb_input/"
     price_TS = pd.read_csv(dir_data + "stock_prices.csv", parse_dates=['Date'], index_col='Date')
     rates_TS = pd.read_csv(dir_data + "rates.csv", parse_dates=['Date'], index_col='Date')
     BM_TS = pd.read_csv(dir_data+ "BM.csv", parse_dates=['Date'], index_col='Date')
@@ -389,25 +389,65 @@ class BacktestTradingStrategy:
 
                 )
 
+    def generate_contribution_table(self):
+
+        shift_signal = self.signal.copy()
+        shift_signal.index = self.asset_prices[:-1].index
+
+        # Change in positions
+        delta_trades = shift_signal.diff(1)
+
+        # Contribution in BPS
+        contribution_bps = calculate_log_returns(self.asset_prices) * (self.signal) * 10000
+
+        # choose first change
+        today_action = pd.DataFrame(delta_trades.loc[delta_trades.index[1]])
+        today_action = today_action.reset_index()
+        today_action.columns = ["Symbol", 'Action']  # Rename columns
+
+        # choose first contribution
+        today_contr = pd.DataFrame(contribution_bps.loc[contribution_bps.index[0]])
+        today_contr = today_contr.reset_index()
+        today_contr.columns = ["Symbol", 'Contribution (bps)']  # Rename columns
+        today_contr['Contribution (bps)'] = today_contr['Contribution (bps)'].round(1)
+
+        # Outer join
+        merged_df_outer = pd.merge(today_action, today_contr, on='Symbol', how='outer')
+
+        return merged_df_outer
+
     def generate_dash_trades_table(self):
 
         percentage = FormatTemplate.percentage(2)
 
-        trades = self.signal
-        trades.index = self.asset_prices[:-1].index
-        delta_trades = trades.diff(1)
-
-        # choose first change
-        today_action = pd.DataFrame(delta_trades.loc[delta_trades.index[1]])
-        today_action['Symbol'] = today_action.index
-        today_action.columns = ["Action" ,'Symbol'] # Rename columns
-        today_action = today_action[['Symbol', "Action"]] # Reorder columns
+        data = self.generate_contribution_table()
 
         return dash_table.DataTable(
-            data=today_action.to_dict('records'),
+            data=data.to_dict('records'),
             columns=[{"name": "Symbol", "id": "Symbol"}] +
-                    [{"name": "Action", "id": "Action", 'type': 'numeric', 'format': percentage}])
+                    [{"name": "Action", "id": "Action", 'type': 'numeric', 'format': percentage}] +
+                    [{"name": "Contribution (bps)", "id": "Contribution (bps)"}],
+            sort_action='native',
+            page_size=20
+        )
 
+    def generate_contribution_h_barchart(self):
+
+        df = self.generate_contribution_table()
+        df = df.sort_values(by='Contribution (bps)', ascending=True)
+        df = df[df['Contribution (bps)'] != 0]
+        df['is_positive'] = 'darkgreen'
+        df.loc[df['Contribution (bps)'] < 0, 'is_positive'] = 'darkred'
+
+        fig = go.Figure(
+            go.Bar(
+                x=df['Contribution (bps)'],
+                y=df['Symbol'],
+                orientation='h',
+                marker_color=df['is_positive'])
+        )
+
+        return fig
 
 # Create an instance of the TradingStrategy class
 strategy = BacktestTradingStrategy(
@@ -457,14 +497,28 @@ app.layout = html.Div([
                                 initial_visible_month=date(2017, 8, 5),
                                 date=date(2017, 8, 25)
                             ),
+                            html.Br()
                         ]
                     ),
                     html.Div(
                         children=[
-                            html.Br(),
-                            strategy.generate_dash_trades_table()
+                            html.Div(
+                                strategy.generate_dash_trades_table(),
+                                style={"display": "inline-block",
+                                       'width':'20%'}
+                            ),
+
+                            html.Div(
+                                    dcc.Graph(
+                                        id='h_bar_cart-graph',
+                                        figure=strategy.generate_contribution_h_barchart(),
+                                        style={'height': '100%'}
+                                    ),
+                                style={"display": "inline-block",
+                                       'width':'80%'}
+                            ),
                         ],
-                        style={'width': 300}
+
                     )
                 ])
     ])
@@ -476,8 +530,19 @@ if __name__ == '__main__':
 
 
 
+df = strategy.generate_contribution_table()
+df = df.sort_values(by='Contribution (bps)', ascending=True)
+df = df[df['Contribution (bps)']!=0]
+df['is_positive'] = 'darkgreen'
+df.loc[df['Contribution (bps)']<0,'is_positive'] = 'darkred'
 
-
+fig = go.Figure(
+    go.Bar(
+            x=df['Contribution (bps)'],
+            y=df['Symbol'],
+            orientation='h',
+            marker_color=df['is_positive'])
+)
 
 
 
