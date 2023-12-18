@@ -63,7 +63,7 @@ if use_mongoDB == True:
                                      collection   = collection_BM)
 
     # Merge the two DataFrames based on a common time index
-    EFFR_TS = pd.DataFrame(pd.merge(price_TS , rates_TS, left_index=True, right_index=True, how='left')['EFFR'])
+    EFFR_TS = pd.DataFrame(pd.merge(price_TS, rates_TS, left_index=True, right_index=True, how='left')['EFFR'])
     # Interpolate the missing values
     EFFR_TS = EFFR_TS.interpolate()
     # Smooth the values using a simple moving average
