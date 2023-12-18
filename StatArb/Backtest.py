@@ -100,9 +100,6 @@ else:
     # EFFR_smoothed['EFFR'][0:(window_size-1)] = EFFR_TS['EFFR'][0:(window_size-1)]
     EFFR_TS = EFFR_TS/(100*252)
 
-# initialize signal dataframe
-signal = price_TS*0
-
 def generateRandomSignal(signal):
 
     # Generate random values of -1, 0, and 1
@@ -114,10 +111,59 @@ def generateRandomSignal(signal):
 
     return random_signal
 
+# Function to implement momentum strategy
+def momentum_strategy(stock_returns, lookback_period, weight):
+
+    """
+    Momentum strategy based on rolling sum of signals.
+
+    Parameters:
+    - stock_returns (pd.DataFrame): DataFrame of stock returns.
+    - lookback_period (int): Number of periods for the rolling sum.
+    - weight (float): Weight for the signals.
+
+    Returns:
+    - pd.DataFrame: Entry signals for long and short positions.
+    """
+    # Parameter validation
+    if not isinstance(stock_returns, pd.DataFrame) or stock_returns.empty:
+        raise ValueError("stock_returns must be a non-empty DataFrame.")
+    if not isinstance(lookback_period, int) or lookback_period <= 0:
+        raise ValueError("lookback_period must be a positive integer.")
+    if not isinstance(weight, (int, float)):
+        raise ValueError("weight must be a numeric value.")
+
+    # Calculate momentum signals for both long and short
+    momentum_signal_L = np.where(stock_returns < 0, 1, 0)
+    momentum_signal_S = np.where(stock_returns > 0, -1, 0)
+
+    # Calculate rolling sum of momentum signals
+    momentum_sum_L = pd.DataFrame(momentum_signal_L).rolling(window=lookback_period).sum()
+    momentum_sum_S = pd.DataFrame(momentum_signal_S).rolling(window=lookback_period).sum()
+
+    # Generate entry signals for long and short positions
+    entry_signals_L = pd.DataFrame(np.where(momentum_sum_L == lookback_period, weight, 0),
+                                    index=stock_returns.index,
+                                    columns=stock_returns.columns)
+    entry_signals_S = pd.DataFrame(np.where(momentum_sum_S == -1*lookback_period, (-1) * weight, 0),
+                                    index=stock_returns.index,
+                                    columns=stock_returns.columns)
+
+
+    return entry_signals_L + entry_signals_S
+
+signal = price_TS*0
+
 # generate a random signal
-random_signal = True
+random_signal = False
 if random_signal == True:
     signal = generateRandomSignal(signal)
+# generate momentum signal
+momentum_signal = True
+if momentum_signal == True:
+    signal = momentum_strategy(calculate_log_returns(price_TS), lookback_period=6, weight=0.03)
+    # signal = signal.shift(1).drop(signal.index[0])
+    signal = signal.shift(1).fillna(0)
 
 # generate a test signal that is long (50-50) the first two names
 test_signal = False
@@ -464,8 +510,7 @@ strategy = BacktestTradingStrategy(
 )
 
 
-# develop
-
+# app
 app.layout = html.Div([
     dcc.Tabs([
         dcc.Tab(label='Performance',
@@ -533,20 +578,6 @@ if __name__ == '__main__':
 
 
 
-
-df = strategy.generate_contribution_table()
-df = df.sort_values(by='Contribution (bps)', ascending=True)
-df = df[df['Contribution (bps)']!=0]
-df['is_positive'] = 'darkgreen'
-df.loc[df['Contribution (bps)']<0,'is_positive'] = 'darkred'
-
-fig = go.Figure(
-    go.Bar(
-            x=df['Contribution (bps)'],
-            y=df['Symbol'],
-            orientation='h',
-            marker_color=df['is_positive'])
-)
 
 
 
