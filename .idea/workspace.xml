@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1cf6929d-f4de-4f88-a3b5-a1da0504cd1c" name="Changes" comment="worked on strategies - momentum">
+    <list default="true" id="d9df3536-0c50-4ce9-86c0-e1993d55e61c" name="Changes" comment="unsupervisd learning project">
+      <change beforePath="$PROJECT_DIR$/.idea/StatArb.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/StatArb.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/StatArb/Unsupervised_Learning_Trading_Strategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/StatArb/Unsupervised_Learning_Trading_Strategy.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,7 +30,9 @@
     <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectId" id="2P5aED8yicJFbeixnDxZkTrf6KK" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -39,7 +44,7 @@
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/foscoantognini/Documents/StatArb/StatArb/USEquityData/Tickers&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.general&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
   <component name="PyConsoleOptionsProvider">
@@ -133,7 +138,7 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="1cf6929d-f4de-4f88-a3b5-a1da0504cd1c" name="Changes" comment="" />
+      <changelist id="d9df3536-0c50-4ce9-86c0-e1993d55e61c" name="Changes" comment="unsupervisd learning project" />
       <created>1682749282673</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />

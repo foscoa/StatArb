@@ -3,6 +3,8 @@ import yfinance as yf
 import numpy as np
 import pandas_ta
 import pandas_datareader.data as web
+from statsmodels.regression.rolling import RollingOLS
+import statsmodels.api as sm
 
 end_date = '2023-09-27'
 start_date = pd.to_datetime(end_date) - pd.DateOffset(365 * 8)
@@ -64,6 +66,10 @@ sp500_data['dollar_volume'] = (sp500_data['adj close']*sp500_data['volume'])/1e6
 last_cols = [c for c in sp500_data.columns.unique(0) if c not in ['dollar_volume', 'volume', 'open',
                                                           'high', 'low', 'close']]
 
+# Convert 'date' level to DatetimeIndex
+sp500_data.index = pd.MultiIndex.from_tuples([(pd.to_datetime(date), ticker) for date, ticker in sp500_data.index])
+sp500_data.index.names = ['date', 'ticker']
+
 data = (pd.concat([sp500_data.unstack('ticker')['dollar_volume'].resample('M').mean().stack('ticker').to_frame('dollar_volume'),
                    sp500_data.unstack()[last_cols].resample('M').last().stack('ticker')],
                   axis=1)).dropna()
@@ -98,6 +104,7 @@ def calculate_returns(df):
     return df
 
 
+
 data = data.groupby(level=1, group_keys=False).apply(calculate_returns).dropna()
 
 #5. Download Fama-French Factors and Calculate Rolling Factor Betas.
@@ -120,4 +127,31 @@ factor_data.index.name = 'date'
 
 factor_data = factor_data.join(data['return_1m']).sort_index()
 
-factor_data
+observations = factor_data.groupby(level=1).size()
+
+valid_stocks = observations[observations >= 10]
+
+factor_data = factor_data[factor_data.index.get_level_values('ticker').isin(valid_stocks.index)]
+
+betas = (factor_data.groupby(level=1,
+                            group_keys=False)
+         .apply(lambda x: RollingOLS(endog=x['return_1m'],
+                                     exog=sm.add_constant(x.drop('return_1m', axis=1)),
+                                     window=min(24, x.shape[0]),
+                                     min_nobs=len(x.columns)+1)
+         .fit(params_only=True)
+         .params
+         .drop('const', axis=1)))
+
+
+factors = ['Mkt-RF', 'SMB', 'HML', 'RMW', 'CMA']
+
+data = (data.join(betas.groupby('ticker').shift()))
+
+data.loc[:, factors] = data.groupby('ticker', group_keys=False)[factors].apply(lambda x: x.fillna(x.mean()))
+
+data = data.drop('adj close', axis=1)
+
+data = data.dropna()
+
+data.info()
