@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="1cf6929d-f4de-4f88-a3b5-a1da0504cd1c" name="Changes" comment="worked on strategies - momentum">
+      <change beforePath="$PROJECT_DIR$/StatArb/Unsupervised_Learning_Trading_Strategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/StatArb/Unsupervised_Learning_Trading_Strategy.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="HARD" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/StatArb/linear_regression_zscore.py" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2P5aED8yicJFbeixnDxZkTrf6KK" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/foscoantognini/Documents/StatArb/StatArb/USEquityData/Tickers&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.general&quot;
+  }
+}</component>
+  <component name="PyConsoleOptionsProvider">
+    <option name="myPythonConsoleState">
+      <console-settings is-module-sdk="true">
+        <option name="myUseModuleSdk" value="true" />
+      </console-settings>
+    </option>
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/StatArb/USEquityData/Tickers" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/StatArb/Routine Download Data" />
+      <recent name="$PROJECT_DIR$/StatArb" />
+      <recent name="$PROJECT_DIR$/StatArb/USEquityData" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.Backtest">
+    <configuration name="Backtest" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="StatArb" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/StatArb" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/StatArb/Backtest.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Pairs_Trading" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="StatArb" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/StatArb" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/StatArb/Pairs_Trading.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="StatArb" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.Backtest" />
+        <item itemvalue="Python.Pairs_Trading" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1cf6929d-f4de-4f88-a3b5-a1da0504cd1c" name="Changes" comment="" />
+      <created>1682749282673</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1682749282673</updated>
+    </task>
+    <task id="LOCAL-00001" summary="first statarb algo">
+      <created>1682755913764</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1682755913764</updated>
+    </task>
+    <task id="LOCAL-00002" summary="finished the model and added pnl">
+      <created>1682781945695</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1682781945695</updated>
+    </task>
+    <task id="LOCAL-00003" summary="commit 1st of may">
+      <created>1682977447734</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1682977447734</updated>
+    </task>
+    <task id="LOCAL-00004" summary="write one csv file with the data for each ticker">
+      <created>1683057983885</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1683057983885</updated>
+    </task>
+    <task id="LOCAL-00005" summary="write test files in csv">
+      <created>1683146728948</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1683146728948</updated>
+    </task>
+    <task id="LOCAL-00006" summary="final script ready to download">
+      <created>1683412314375</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1683412314375</updated>
+    </task>
+    <task id="LOCAL-00007" summary="final script ready to download">
+      <created>1683412877598</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1683412877598</updated>
+    </task>
+    <task id="LOCAL-00008" summary="final script ready to download 13 May 23">
+      <created>1683961973829</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1683961973830</updated>
+    </task>
+    <task id="LOCAL-00009" summary="mongoDB exploring">
+      <created>1684096205578</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1684096205578</updated>
+    </task>
+    <task id="LOCAL-00010" summary="start working on Nasdaq tickers">
+      <created>1684353852386</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1684353852386</updated>
+    </task>
+    <task id="LOCAL-00011" summary="start working on Nasdaq tickers">
+      <created>1685206752916</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1685206752916</updated>
+    </task>
+    <task id="LOCAL-00012" summary="worked on generate Time Series function">
+      <created>1685389335042</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1685389335042</updated>
+    </task>
+    <task id="LOCAL-00013" summary="work on cash flow statement">
+      <created>1685903868519</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1685903868519</updated>
+    </task>
+    <task id="LOCAL-00014" summary="worked on risk-free">
+      <created>1686514023864</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1686514023865</updated>
+    </task>
+    <task id="LOCAL-00015" summary="corrected maxDD">
+      <created>1686600212627</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1686600212627</updated>
+    </task>
+    <task id="LOCAL-00016" summary="cleaned up dowloading procedure">
+      <created>1687171847966</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1687171847966</updated>
+    </task>
+    <task id="LOCAL-00017" summary="cleaned up donwloading procedure">
+      <created>1687328180209</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1687328180209</updated>
+    </task>
+    <task id="LOCAL-00018" summary="corrected queryTimeSeriesEquity">
+      <created>1688535946535</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1688535946535</updated>
+    </task>
+    <task id="LOCAL-00019" summary="factorexposure">
+      <created>1688931078173</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1688931078173</updated>
+    </task>
+    <task id="LOCAL-00020" summary="worked on correlation matrix">
+      <created>1689579677814</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1689579677814</updated>
+    </task>
+    <task id="LOCAL-00021" summary="sort corr_matrix">
+      <created>1689580245022</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1689580245022</updated>
+    </task>
+    <task id="LOCAL-00022" summary="saved corr_pairs">
+      <created>1689747676402</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1689747676402</updated>
+    </task>
+    <task id="LOCAL-00023" summary="saved corr_pairs">
+      <created>1689747921194</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1689747921194</updated>
+    </task>
+    <task id="LOCAL-00024" summary="redefined storage in pymongo">
+      <created>1690573454887</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1690573454887</updated>
+    </task>
+    <task id="LOCAL-00025" summary="redefined storage in pymongo">
+      <created>1690958210169</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1690958210169</updated>
+    </task>
+    <task id="LOCAL-00026" summary="added directory for working from home">
+      <created>1699338762030</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1699338762030</updated>
+    </task>
+    <task id="LOCAL-00027" summary="rename file Backtest.py">
+      <created>1699614328921</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1699614328921</updated>
+    </task>
+    <task id="LOCAL-00028" summary="Revert &quot;sort corr_matrix&quot;&#10;&#10;This reverts commit fc3dc766">
+      <created>1699636043065</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1699636043065</updated>
+    </task>
+    <task id="LOCAL-00029" summary="rename file Backtest.py">
+      <created>1699636498204</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1699636498204</updated>
+    </task>
+    <task id="LOCAL-00030" summary="rename file Backtest.py">
+      <created>1699636565375</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1699636565375</updated>
+    </task>
+    <task id="LOCAL-00031" summary="rename file Backtest.py">
+      <created>1699637041507</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1699637041507</updated>
+    </task>
+    <task id="LOCAL-00032" summary="rename file Backtest.py">
+      <created>1699638363662</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1699638363662</updated>
+    </task>
+    <task id="LOCAL-00033" summary="insert backtest validation and re-integrate risk free rate">
+      <created>1699726797483</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1699726797483</updated>
+    </task>
+    <task id="LOCAL-00034" summary="created &quot;Trades&quot; tab">
+      <created>1699826906475</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1699826906475</updated>
+    </task>
+    <task id="LOCAL-00035" summary="improved &quot;Trades&quot; tab">
+      <created>1699913185358</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1699913185358</updated>
+    </task>
+    <task id="LOCAL-00036" summary="worked on strategies - momentum">
+      <created>1702882288196</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1702882288196</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ID_ORDER">
+      <list>
+        <option value="Default.Root" />
+        <option value="Default.Author" />
+        <option value="Default.Date" />
+        <option value="Default.Subject" />
+        <option value="Space.CommitStatus" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="write one csv file with the data for each ticker" />
+    <MESSAGE value="write test files in csv" />
+    <MESSAGE value="final script ready to download" />
+    <MESSAGE value="final script ready to download 13 May 23" />
+    <MESSAGE value="mongoDB exploring" />
+    <MESSAGE value="start working on Nasdaq tickers" />
+    <MESSAGE value="worked on generate Time Series function" />
+    <MESSAGE value="work on cash flow statement" />
+    <MESSAGE value="worked on risk-free" />
+    <MESSAGE value="corrected maxDD" />
+    <MESSAGE value="cleaned up dowloading procedure" />
+    <MESSAGE value="cleaned up donwloading procedure" />
+    <MESSAGE value="corrected queryTimeSeriesEquity" />
+    <MESSAGE value="factorexposure" />
+    <MESSAGE value="worked on correlation matrix" />
+    <MESSAGE value="sort corr_matrix" />
+    <MESSAGE value="saved corr_pairs" />
+    <MESSAGE value="redefined storage in pymongo" />
+    <MESSAGE value="added directory for working from home" />
+    <MESSAGE value="Revert &quot;sort corr_matrix&quot;&#10;&#10;This reverts commit fc3dc766" />
+    <MESSAGE value="rename file Backtest.py" />
+    <MESSAGE value="insert backtest validation and re-integrate risk free rate" />
+    <MESSAGE value="created &quot;Trades&quot; tab" />
+    <MESSAGE value="improved &quot;Trades&quot; tab" />
+    <MESSAGE value="worked on strategies - momentum" />
+    <option name="LAST_COMMIT_MESSAGE" value="worked on strategies - momentum" />
+  </component>
+</project>
