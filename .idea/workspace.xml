@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d9df3536-0c50-4ce9-86c0-e1993d55e61c" name="Changes" comment="unsupervisd learning project">
-      <change beforePath="$PROJECT_DIR$/.idea/StatArb.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/StatArb.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/StatArb/Unsupervised_Learning_Trading_Strategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/StatArb/Unsupervised_Learning_Trading_Strategy.py" afterDir="false" />
-    </list>
+    <list default="true" id="d9df3536-0c50-4ce9-86c0-e1993d55e61c" name="Changes" comment="unsupervisd learning project" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -396,7 +391,14 @@
       <option name="project" value="LOCAL" />
       <updated>1702882288196</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="unsupervisd learning project">
+      <created>1703007493685</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1703007493686</updated>
+    </task>
+    <option name="localTasksCounter" value="38" />
     <servers />
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -422,7 +424,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="write one csv file with the data for each ticker" />
     <MESSAGE value="write test files in csv" />
     <MESSAGE value="final script ready to download" />
     <MESSAGE value="final script ready to download 13 May 23" />
@@ -447,6 +448,7 @@
     <MESSAGE value="created &quot;Trades&quot; tab" />
     <MESSAGE value="improved &quot;Trades&quot; tab" />
     <MESSAGE value="worked on strategies - momentum" />
-    <option name="LAST_COMMIT_MESSAGE" value="worked on strategies - momentum" />
+    <MESSAGE value="unsupervisd learning project" />
+    <option name="LAST_COMMIT_MESSAGE" value="unsupervisd learning project" />
   </component>
 </project>
