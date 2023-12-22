@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d9df3536-0c50-4ce9-86c0-e1993d55e61c" name="Changes" comment="unsupervisd learning project" />
+    <list default="true" id="d9df3536-0c50-4ce9-86c0-e1993d55e61c" name="Changes" comment="initialize VIX strategy">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/StatArb/VIX_Futures/VIX_strategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/StatArb/VIX_Futures/VIX_strategy.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -398,7 +401,14 @@
       <option name="project" value="LOCAL" />
       <updated>1703007493686</updated>
     </task>
-    <option name="localTasksCounter" value="38" />
+    <task id="LOCAL-00038" summary="initialize VIX strategy">
+      <created>1703093401665</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1703093401666</updated>
+    </task>
+    <option name="localTasksCounter" value="39" />
     <servers />
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -424,7 +434,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="write test files in csv" />
     <MESSAGE value="final script ready to download" />
     <MESSAGE value="final script ready to download 13 May 23" />
     <MESSAGE value="mongoDB exploring" />
@@ -449,6 +458,7 @@
     <MESSAGE value="improved &quot;Trades&quot; tab" />
     <MESSAGE value="worked on strategies - momentum" />
     <MESSAGE value="unsupervisd learning project" />
-    <option name="LAST_COMMIT_MESSAGE" value="unsupervisd learning project" />
+    <MESSAGE value="initialize VIX strategy" />
+    <option name="LAST_COMMIT_MESSAGE" value="initialize VIX strategy" />
   </component>
 </project>
